@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
 import {
   Layers,
-  Drill,
+  Hammer,
   Ruler,
   Waves,
   Building2,
@@ -46,7 +46,7 @@ const Index = () => {
         desc: "Caracterización integral del terreno para el diseño seguro de cimentaciones.",
       },
       {
-        icon: Drill,
+        icon: Hammer,
         title: "Sondeos y perforación",
         desc: "Sondeos SPT, toma de muestras inalteradas y monitoreo piezométrico.",
       },
