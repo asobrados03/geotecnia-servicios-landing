@@ -89,9 +89,9 @@ const Index = () => {
     <div>
       <header className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto flex h-16 items-center justify-between">
-          <a href="#" className="flex items-center gap-2" aria-label="GeoInsight">
+          <a href="#" className="flex items-center gap-2" aria-label="Geotecnia y Servicios">
             <div className="h-8 w-8 rounded-md bg-gradient-to-tr from-[hsl(var(--brand-700))] to-[hsl(var(--brand-500))] shadow" />
-            <span className="font-extrabold tracking-tight">GeoInsight</span>
+            <span className="font-extrabold tracking-tight">Geotecnia y Servicios</span>
           </a>
           <nav aria-label="Navegación principal" className="hidden gap-6 md:flex">
             <a href="#servicios" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Servicios</a>
@@ -99,7 +99,7 @@ const Index = () => {
             <a href="#contacto" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Contacto</a>
           </nav>
           <div className="hidden md:block">
-            <Button variant="hero" size="lg" onClick={() => scrollTo("contacto")}>Solicitar cotización</Button>
+            <Button variant="hero" size="lg" onClick={() => scrollTo("contacto")}>Solicitar presupuesto</Button>
           </div>
         </div>
       </header>
@@ -213,7 +213,7 @@ const Index = () => {
 
         <section id="contacto" className="container mx-auto py-20 md:py-28">
           <header className="mx-auto mb-10 max-w-2xl text-center">
-            <h2 className="text-3xl font-bold tracking-tight md:text-4xl">Solicita una cotización</h2>
+            <h2 className="text-3xl font-bold tracking-tight md:text-4xl">Solicita un presupuesto</h2>
             <p className="mt-3 text-muted-foreground">Cuéntanos sobre tu proyecto y te responderemos en menos de 24 horas.</p>
           </header>
 
@@ -246,7 +246,7 @@ const Index = () => {
 
       <footer className="border-t bg-background">
         <div className="container mx-auto flex flex-col items-center justify-between gap-4 py-8 sm:flex-row">
-          <p className="text-sm text-muted-foreground">© {new Date().getFullYear()} GeoInsight. Todos los derechos reservados.</p>
+          <p className="text-sm text-muted-foreground">© {new Date().getFullYear()} Geotecnia y Servicios. Todos los derechos reservados.</p>
           <div className="flex gap-6 text-sm text-muted-foreground">
             <a href="#servicios" className="hover:text-foreground">Servicios</a>
             <a href="#proceso" className="hover:text-foreground">Proceso</a>
