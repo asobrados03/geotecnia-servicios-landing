@@ -91,8 +91,7 @@ const Index = () => {
       <header className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto flex h-16 items-center justify-between">
           <a href="/index.html" className="flex items-center gap-2" aria-label="Geotecnia y Servicios">
-            <div className="h-8 w-8 rounded-md bg-gradient-to-tr from-[hsl(var(--brand-700))] to-[hsl(var(--brand-500))] shadow" />
-            <span className="font-extrabold tracking-tight">Geotecnia y Servicios</span>
+            <img src="/src/assets/LOGO.png" alt="Logo de Geotecnia y Servicios (G&S)" className="h-8 w-8 rounded-sm object-contain" width={32} height={32} />
           </a>
           <nav aria-label="Navegación principal" className="hidden gap-6 md:flex">
             <a href="#servicios" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Servicios</a>
