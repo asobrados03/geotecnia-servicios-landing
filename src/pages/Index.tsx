@@ -125,7 +125,7 @@ const Index = () => {
 
               <div className="mt-10 grid w-full grid-cols-3 gap-4 text-center md:text-left">
                 <div>
-                  <p className="text-3xl font-extrabold">10+</p>
+                  <p className="text-3xl font-extrabold">25+</p>
                   <p className="text-xs text-muted-foreground">Años de experiencia</p>
                 </div>
                 <div>
@@ -191,7 +191,7 @@ const Index = () => {
               <p className="mt-3 text-muted-foreground">Metodología clara, resultados confiables.</p>
             </header>
             <div className="grid gap-6 md:grid-cols-4">
-              {["Brief y alcance","Campaña de campo","Laboratorio y análisis","Informe y asesoría"].map((step, i) => (
+              {["Reunión inicial y alcance","Campaña de campo","Laboratorio y análisis","Informe y asesoría"].map((step, i) => (
                 <div key={step} className="relative rounded-lg border bg-card p-6 shadow-sm">
                   <div className="mb-3 inline-flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-tr from-[hsl(var(--brand-600))] to-[hsl(var(--brand-400))] text-primary-foreground text-sm font-bold">
                     {i + 1}
