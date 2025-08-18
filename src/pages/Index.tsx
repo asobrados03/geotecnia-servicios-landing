@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import heroImage from "@/assets/hero-geotech.jpg";
 import logoImage from "@/assets/LOGO.png";
 import { Button } from "@/components/ui/button";
@@ -91,7 +91,7 @@ const Index = () => {
     <div>
       <header className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto flex h-16 items-center justify-between">
-          <a href="/index.html" className="flex items-center gap-2" aria-label="Geotecnia y Servicios">
+          <a href="/" className="flex items-center gap-2" aria-label="Geotecnia y Servicios">
             <img src="/src/assets/LOGO.png" alt="Logo de Geotecnia y Servicios (G&S)" className="h-8 w-8 rounded-sm object-contain" width={32} height={32} />
             <span className="font-extrabold tracking-tight">Geotecnia y Servicios</span>
           </a>

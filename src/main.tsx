@@ -17,4 +17,4 @@ const ensureFavicon = (href: string) => {
 
 ensureFavicon(logoUrl);
 
-createRoot(document.getElementById("root")!).render(<App />);
+createRoot(document.getElementById("root")).render(<App />);
