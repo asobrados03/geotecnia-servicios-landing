@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import heroImage from "@/assets/hero-geotech.jpg";
+import logoImage from "@/assets/LOGO.png";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -96,6 +97,8 @@ const Index = () => {
           </a>
           <nav aria-label="Navegación principal" className="hidden gap-6 md:flex">
             <a href="#servicios" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Servicios</a>
+            <a href="#galeria" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Galería</a>
+            <a href="#proyectos" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Proyectos</a>
             <a href="#proceso" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Proceso</a>
             <a href="#contacto" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Contacto</a>
           </nav>
@@ -185,6 +188,81 @@ const Index = () => {
           </div>
         </section>
 
+        {/* Galería (sección anclada) */}
+        <section id="galeria" className="container mx-auto py-20 md:py-28">
+          <header className="mx-auto mb-10 max-w-2xl text-center">
+            <h2 className="text-3xl font-bold tracking-tight md:text-4xl">Galería de imágenes</h2>
+            <p className="mt-3 text-muted-foreground">Algunas capturas representativas de nuestros trabajos.</p>
+          </header>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <Card>
+              <CardContent className="p-0">
+                <img src={heroImage} alt="Perforación geotécnica" className="h-56 w-full rounded-t-md object-cover" />
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-0">
+                <img src={logoImage} alt="Logo de G&S" className="h-56 w-full rounded-t-md object-contain bg-muted" />
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-0">
+                <img src={heroImage} alt="Equipo de campo" className="h-56 w-full rounded-t-md object-cover" />
+              </CardContent>
+            </Card>
+          </div>
+        </section>
+
+        {/* Proyectos (sección anclada) */}
+        <section id="proyectos" className="container mx-auto py-20 md:py-28">
+          <header className="mx-auto mb-10 max-w-2xl text-center">
+            <h2 className="text-3xl font-bold tracking-tight md:text-4xl">Proyectos</h2>
+            <p className="mt-3 text-muted-foreground">Selección de áreas de trabajo y estudios realizados.</p>
+          </header>
+          <div className="grid gap-6 sm:grid-cols-2">
+            <Card className="border-muted bg-card/60">
+              <CardHeader>
+                <CardTitle>Estudios Geotécnicos</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  Campañas de campo (SPT/CPTu), caracterización estratigráfica, parámetros de resistencia y recomendaciones de cimentación.
+                </p>
+              </CardContent>
+            </Card>
+            <Card className="border-muted bg-card/60">
+              <CardHeader>
+                <CardTitle>Control de obra lineal</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  Auscultación y control de deformaciones en carreteras, tuberías y corredores ferroviarios.
+                </p>
+              </CardContent>
+            </Card>
+            <Card className="border-muted bg-card/60">
+              <CardHeader>
+                <CardTitle>Mapas de isopiezas</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  Modelación hidrogeológica y elaboración de mapas de isopiezas para diseño y gestión de acuíferos.
+                </p>
+              </CardContent>
+            </Card>
+            <Card className="border-muted bg-card/60">
+              <CardHeader>
+                <CardTitle>Estudios de recurrencia de avenidas</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  Análisis estadístico de crecidas, periodos de retorno y soporte para diseño hidráulico.
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        </section>
+
         <section id="proceso" className="bg-muted/30 py-20 md:py-28">
           <div className="container mx-auto">
             <header className="mx-auto mb-10 max-w-2xl text-center">
@@ -250,6 +328,8 @@ const Index = () => {
           <p className="text-sm text-muted-foreground">© {new Date().getFullYear()} Geotecnia y Servicios. Todos los derechos reservados.</p>
           <div className="flex gap-6 text-sm text-muted-foreground">
             <a href="#servicios" className="hover:text-foreground">Servicios</a>
+            <a href="#galeria" className="hover:text-foreground">Galería</a>
+            <a href="#proyectos" className="hover:text-foreground">Proyectos</a>
             <a href="#proceso" className="hover:text-foreground">Proceso</a>
             <a href="#contacto" className="hover:text-foreground">Contacto</a>
           </div>
