@@ -77,9 +77,9 @@ const Index = () => {
 
   // Cargar todas las imágenes de assets (excepto LOGO y hero-geotech) para la galería
   const galleryImages = useMemo(() => {
-    const modules = import.meta.glob('/src/assets/*.{png,jpg,jpeg,webp}', { eager: true, as: 'url' }) as Record<string, string>;
+    const modules = import.meta.glob('/src/assets/*.{png,jpg,jpeg,webp}', { eager: true, as: 'url' });
     return Object.entries(modules)
-      .filter(([path]) => !/\/LOGO\.png$/.test(path) && !/\/hero-geotech\.jpg$/.test(path))
+      .filter(([path]) => !path.endsWith('/LOGO.png') && !path.endsWith('/hero-geotech.jpg'))
       .sort((a, b) => a[0].localeCompare(b[0]))
       .map(([, url]) => url);
   }, []);
