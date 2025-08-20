@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useRef } from "react";
 import heroImage from "@/assets/hero-geotech.jpg";
-import logoImage from "@/assets/LOGO.png";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { toast } from "@/hooks/use-toast";
 import {
   Layers,
@@ -74,6 +74,15 @@ const Index = () => {
     ],
     []
   );
+
+  // Cargar todas las imágenes de assets (excepto LOGO y hero-geotech) para la galería
+  const galleryImages = useMemo(() => {
+    const modules = import.meta.glob('/src/assets/*.{png,jpg,jpeg,webp}', { eager: true, as: 'url' }) as Record<string, string>;
+    return Object.entries(modules)
+      .filter(([path]) => !/\/LOGO\.png$/.test(path) && !/\/hero-geotech\.jpg$/.test(path))
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .map(([, url]) => url);
+  }, []);
 
   const handleSubmit: React.FormEventHandler<HTMLFormElement> = (e) => {
     e.preventDefault();
@@ -194,23 +203,24 @@ const Index = () => {
             <h2 className="text-3xl font-bold tracking-tight md:text-4xl">Galería de imágenes</h2>
             <p className="mt-3 text-muted-foreground">Algunas capturas representativas de nuestros trabajos.</p>
           </header>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <Card>
-              <CardContent className="p-0">
-                <img src={heroImage} alt="Perforación geotécnica" className="h-56 w-full rounded-t-md object-cover" />
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-0">
-                <img src={logoImage} alt="Logo de G&S" className="h-56 w-full rounded-t-md object-contain bg-muted" />
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-0">
-                <img src={heroImage} alt="Equipo de campo" className="h-56 w-full rounded-t-md object-cover" />
-              </CardContent>
-            </Card>
-          </div>
+
+          <Carousel className="mx-auto max-w-6xl" opts={{ align: "start", loop: true }}>
+            <CarouselContent>
+              {galleryImages.map((src) => {
+                const fileName = src.split('/').pop() || 'Imagen';
+                const alt = fileName.replace(/[-_]/g, ' ').replace(/\.[^.]+$/, '');
+                return (
+                  <CarouselItem key={src} className="basis-full sm:basis-1/2 lg:basis-1/3">
+                    <div className="overflow-hidden rounded-md border bg-card">
+                      <img src={src} alt={alt} className="h-56 w-full object-cover" />
+                    </div>
+                  </CarouselItem>
+                );
+              })}
+            </CarouselContent>
+            <CarouselPrevious aria-label="Imagen anterior" />
+            <CarouselNext aria-label="Imagen siguiente" />
+          </Carousel>
         </section>
 
         {/* Proyectos (sección anclada) */}
@@ -242,7 +252,7 @@ const Index = () => {
             </Card>
             <Card className="border-muted bg-card/60">
               <CardHeader>
-                <CardTitle>Mapas de isopiezas</CardTitle>
+                <CardTitle>Estudios hidrogeológicos</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">
@@ -252,7 +262,7 @@ const Index = () => {
             </Card>
             <Card className="border-muted bg-card/60">
               <CardHeader>
-                <CardTitle>Estudios de recurrencia de avenidas</CardTitle>
+                <CardTitle>Estudios de avenidas</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">
@@ -317,7 +327,7 @@ const Index = () => {
             </div>
             <div className="flex items-center justify-between gap-3">
               <Button type="submit" variant="hero" size="lg">Enviar</Button>
-              <a href="mailto:contacto@geoinsight.com" className="text-sm text-muted-foreground hover:text-foreground">o escríbenos a contacto@geoinsight.com</a>
+              <a href="mailto:geotecniayservicios@gmail.com" className="text-sm text-muted-foreground hover:text-foreground">o escríbenos a geotecniayservicios@gmail.com</a>
             </div>
           </form>
         </section>
