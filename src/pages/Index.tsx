@@ -211,15 +211,15 @@ const Index = () => {
                 const alt = fileName.replace(/[-_]/g, ' ').replace(/\.[^.]+$/, '');
                 return (
                   <CarouselItem key={src} className="basis-full sm:basis-1/2 lg:basis-1/3">
-                    <div className="overflow-hidden rounded-md border bg-card">
-                      <img src={src} alt={alt} className="h-56 w-full object-cover" />
+                    <div className="overflow-hidden rounded-md border bg-card aspect-[4/3]">
+                      <img src={src} alt={alt} loading="lazy" className="h-full w-full object-cover" />
                     </div>
                   </CarouselItem>
                 );
               })}
             </CarouselContent>
-            <CarouselPrevious aria-label="Imagen anterior" />
-            <CarouselNext aria-label="Imagen siguiente" />
+            <CarouselPrevious aria-label="Imagen anterior" className="left-2 sm:-left-12" />
+            <CarouselNext aria-label="Imagen siguiente" className="right-2 sm:-right-12" />
           </Carousel>
         </section>
 
