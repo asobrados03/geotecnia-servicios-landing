@@ -99,7 +99,7 @@ const Index = () => {
   return (
     <div>
       <header className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container mx-auto flex h-16 items-center justify-between">
+        <div className="container mx-auto px-4 md:px-6 flex h-16 items-center justify-between">
           <a href="/" className="flex items-center gap-2" aria-label="Geotecnia y Servicios">
             <img src="/src/assets/LOGO.png" alt="Logo de Geotecnia y Servicios (G&S)" className="h-8 w-8 rounded-sm object-contain" width={32} height={32} />
             <span className="font-extrabold tracking-tight">Geotecnia y Servicios</span>
@@ -111,7 +111,7 @@ const Index = () => {
             <a href="#proceso" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Proceso</a>
             <a href="#contacto" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Contacto</a>
           </nav>
-          <div className="hidden md:block">
+          <div className="hidden md:block md:ml-6">
             <Button variant="hero" size="lg" onClick={() => scrollTo("contacto")}>Solicitar presupuesto</Button>
           </div>
         </div>
@@ -119,7 +119,7 @@ const Index = () => {
 
       <main>
         <section ref={heroRef} className="relative overflow-hidden">
-          <article className="container mx-auto grid gap-10 py-20 md:grid-cols-2 md:gap-16 md:py-28">
+          <article className="container mx-auto px-4 md:px-6 grid gap-10 py-20 md:grid-cols-2 md:gap-16 md:py-28">
             <div className="relative z-10 flex flex-col items-start justify-center">
               <Badge className="mb-4">Ingeniería geotécnica</Badge>
               <h1 className="mb-4 text-4xl font-extrabold tracking-tight md:text-5xl">
@@ -174,7 +174,7 @@ const Index = () => {
           />
         </section>
 
-        <section id="servicios" className="container mx-auto py-20 md:py-28">
+        <section id="servicios" className="container mx-auto px-4 md:px-6 py-20 md:py-28">
           <header className="mx-auto mb-10 max-w-2xl text-center">
             <h2 className="text-3xl font-bold tracking-tight md:text-4xl">Servicios geotécnicos</h2>
             <p className="mt-3 text-muted-foreground">Soluciones técnicas para cada fase del proyecto, desde la campaña de campo hasta el informe final.</p>
@@ -198,7 +198,7 @@ const Index = () => {
         </section>
 
         {/* Galería (sección anclada) */}
-        <section id="galeria" className="container mx-auto py-20 md:py-28">
+        <section id="galeria" className="container mx-auto px-4 md:px-6 py-20 md:py-28">
           <header className="mx-auto mb-10 max-w-2xl text-center">
             <h2 className="text-3xl font-bold tracking-tight md:text-4xl">Galería de imágenes</h2>
             <p className="mt-3 text-muted-foreground">Algunas capturas representativas de nuestros trabajos.</p>
@@ -218,13 +218,13 @@ const Index = () => {
                 );
               })}
             </CarouselContent>
-            <CarouselPrevious aria-label="Imagen anterior" className="left-2 sm:-left-12" />
-            <CarouselNext aria-label="Imagen siguiente" className="right-2 sm:-right-12" />
+            <CarouselPrevious aria-label="Imagen anterior" className="left-2 lg:-left-12" />
+            <CarouselNext aria-label="Imagen siguiente" className="right-2 lg:-right-12" />
           </Carousel>
         </section>
 
         {/* Proyectos (sección anclada) */}
-        <section id="proyectos" className="container mx-auto py-20 md:py-28">
+        <section id="proyectos" className="container mx-auto px-4 md:px-6 py-20 md:py-28">
           <header className="mx-auto mb-10 max-w-2xl text-center">
             <h2 className="text-3xl font-bold tracking-tight md:text-4xl">Proyectos</h2>
             <p className="mt-3 text-muted-foreground">Selección de áreas de trabajo y estudios realizados.</p>
@@ -300,7 +300,7 @@ const Index = () => {
           </div>
         </section>
 
-        <section id="contacto" className="container mx-auto py-20 md:py-28">
+        <section id="contacto" className="container mx-auto px-4 md:px-6 py-20 md:py-28">
           <header className="mx-auto mb-10 max-w-2xl text-center">
             <h2 className="text-3xl font-bold tracking-tight md:text-4xl">Solicita un presupuesto</h2>
             <p className="mt-3 text-muted-foreground">Cuéntanos sobre tu proyecto y te responderemos en menos de 24 horas.</p>
@@ -334,7 +334,7 @@ const Index = () => {
       </main>
 
       <footer className="border-t bg-background">
-        <div className="container mx-auto flex flex-col items-center justify-between gap-4 py-8 sm:flex-row">
+        <div className="container mx-auto px-4 md:px-6 flex flex-col items-center justify-between gap-4 py-8 sm:flex-row">
           <p className="text-sm text-muted-foreground">© {new Date().getFullYear()} Geotecnia y Servicios. Todos los derechos reservados.</p>
           <div className="flex gap-6 text-sm text-muted-foreground">
             <a href="#servicios" className="hover:text-foreground">Servicios</a>
