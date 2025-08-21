@@ -75,11 +75,10 @@ const Index = () => {
     []
   );
 
-  // Cargar todas las imágenes de assets (excepto LOGO y hero-geotech) para la galería
+  // Cargar todas las imágenes ubicadas en assets/gallery para la galería
   const galleryImages = useMemo(() => {
-    const modules = import.meta.glob('/src/assets/*.{png,jpg,jpeg,webp}', { eager: true, as: 'url' });
+    const modules = import.meta.glob('/src/assets/gallery/*.{png,jpg,jpeg,webp}', { eager: true, as: 'url' });
     return Object.entries(modules)
-      .filter(([path]) => !path.endsWith('/LOGO.png') && !path.endsWith('/hero-geotech.jpg'))
       .sort((a, b) => a[0].localeCompare(b[0]))
       .map(([, url]) => url);
   }, []);
