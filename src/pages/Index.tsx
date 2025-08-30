@@ -28,26 +28,14 @@ const Index = () => {
     import.meta.env.VITE_RECAPTCHA_SITE_KEY;
 
   useEffect(() => {
-    // Load and render reCAPTCHA v2 widget dynamically if site key is configured
-    const renderCaptcha = () => {
-      if (!siteKey || !window.grecaptcha) return;
-      window.grecaptcha.render("recaptcha-container", {
-        sitekey: siteKey,
-        callback: (token: string) => setRecaptchaToken(token),
-      });
-    };
 
-    if (siteKey) {
-      if (window.grecaptcha) {
-        renderCaptcha();
-      } else {
-        const script = document.createElement("script");
-        script.src = "https://www.google.com/recaptcha/api.js";
-        script.async = true;
-        script.defer = true;
-        script.onload = renderCaptcha;
-        document.head.appendChild(script);
-      }
+    // Load reCAPTCHA v3 script dynamically if site key is configured
+    if (siteKey && !window.grecaptcha) {
+      const script = document.createElement("script");
+      script.src = `https://www.google.com/recaptcha/api.js?render=${siteKey}`;
+      script.async = true;
+      script.defer = true;
+      document.head.appendChild(script);
     }
 
     const el = heroRef.current;
@@ -136,10 +124,14 @@ const Index = () => {
     }
 
     try {
-      if (!recaptchaToken) {
-        toast({ title: "Verificación requerida", description: "Por favor, confirma el reCAPTCHA." });
+      if (!siteKey || !window.grecaptcha) {
+        toast({ title: "Verificación requerida", description: "reCAPTCHA no disponible." });
+
         return;
       }
+
+      await new Promise<void>((resolve) => window.grecaptcha!.ready(resolve));
+      const recaptchaToken = await window.grecaptcha!.execute(siteKey, { action: "submit" });
 
       const res = await fetch("/api/contact", {
         method: "POST",
