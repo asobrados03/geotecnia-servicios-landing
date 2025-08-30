@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import heroImage from "@/assets/hero-geotech.jpg";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -22,17 +22,32 @@ const scrollTo = (id: string) => {
 
 const Index = () => {
   const heroRef = useRef<HTMLDivElement | null>(null);
+  const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
   const siteKey =
     import.meta.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY ??
     import.meta.env.VITE_RECAPTCHA_SITE_KEY;
 
   useEffect(() => {
-    // Load reCAPTCHA v3 script dynamically if site key is configured
-    if (siteKey && !window.grecaptcha) {
-      const script = document.createElement("script");
-      script.src = `https://www.google.com/recaptcha/api.js?render=${encodeURIComponent(siteKey)}`;
-      script.async = true;
-      document.head.appendChild(script);
+    // Load and render reCAPTCHA v2 widget dynamically if site key is configured
+    const renderCaptcha = () => {
+      if (!siteKey || !window.grecaptcha) return;
+      window.grecaptcha.render("recaptcha-container", {
+        sitekey: siteKey,
+        callback: (token: string) => setRecaptchaToken(token),
+      });
+    };
+
+    if (siteKey) {
+      if (window.grecaptcha) {
+        renderCaptcha();
+      } else {
+        const script = document.createElement("script");
+        script.src = "https://www.google.com/recaptcha/api.js";
+        script.async = true;
+        script.defer = true;
+        script.onload = renderCaptcha;
+        document.head.appendChild(script);
+      }
     }
 
     const el = heroRef.current;
@@ -121,24 +136,9 @@ const Index = () => {
     }
 
     try {
-      // Obtain reCAPTCHA v3 token if available
-      let recaptchaToken: string | undefined;
-      const g = window.grecaptcha;
-      if (siteKey && g && typeof g.ready === "function") {
-        try {
-          recaptchaToken = await new Promise<string | undefined>((resolve) => {
-            g.ready(async () => {
-              try {
-                const token = await g.execute(siteKey, { action: "contact_form" });
-                resolve(token);
-              } catch {
-                resolve(undefined);
-              }
-            });
-          });
-        } catch {
-          recaptchaToken = undefined;
-        }
+      if (!recaptchaToken) {
+        toast({ title: "Verificación requerida", description: "Por favor, confirma el reCAPTCHA." });
+        return;
       }
 
       const res = await fetch("/api/contact", {
@@ -156,9 +156,13 @@ const Index = () => {
         description: `${nombre ? nombre + ", " : ""}hemos recibido tu mensaje y te responderemos en menos de 24h.`,
       });
       formEl.reset();
+      setRecaptchaToken(null);
+      window.grecaptcha?.reset();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Intenta de nuevo en unos minutos.";
       toast({ title: "Error al enviar", description: message });
+      window.grecaptcha?.reset();
+      setRecaptchaToken(null);
     }
   };
 
@@ -393,6 +397,7 @@ const Index = () => {
               <label htmlFor="mensaje" className="text-sm font-medium">Mensaje</label>
               <textarea id="mensaje" name="mensaje" rows={4} required className="rounded-md border bg-background px-3 py-2 outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" />
             </div>
+            <div id="recaptcha-container" className="mt-2 flex justify-center" />
             <div className="flex items-center justify-between gap-3">
               <Button type="submit" variant="hero" size="lg">Enviar</Button>
               <a href="mailto:geotecniayservicios@gmail.com" className="text-sm text-muted-foreground hover:text-foreground">o escríbenos a geotecniayservicios@gmail.com</a>
