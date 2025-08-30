@@ -28,6 +28,10 @@ export default defineConfig(({ mode }) => {
     resolve: {
       alias: {
         "@": path.resolve(__dirname, "./src"),
+        "@vercel/analytics/react": path.resolve(
+          __dirname,
+          "./src/lib/vercel-analytics"
+        ),
       },
     },
   };
