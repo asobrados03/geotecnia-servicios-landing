@@ -83,8 +83,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const fromEmail = process.env.CONTACT_FROM_EMAIL || "no-reply@geotecniayservicios.es";
 
   if (!resendKey) {
-    // Still succeed but warn client; record is saved already
-    return res.status(200).json({ ok: true, warning: "Falta RESEND_API_KEY, no se envió email" });
+    // Record already saved, but cannot send notification emails
+    return res.status(500).json({ error: "Falta RESEND_API_KEY, no se envió email" });
   }
 
   const resend = new Resend(resendKey);
@@ -113,7 +113,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     });
   } catch (err) {
     console.error("Error enviando correos de contacto", err);
-    return res.status(200).json({ ok: true, warning: "No se pudieron enviar los correos" });
+    return res.status(500).json({ error: "No se pudieron enviar los correos" });
   }
 
   return res.status(200).json({ ok: true });

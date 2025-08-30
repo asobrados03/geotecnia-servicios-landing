@@ -147,7 +147,9 @@ const Index = () => {
         body: JSON.stringify({ nombre, email, empresa: empresa || null, mensaje, recaptchaToken })
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data?.error || "No se pudo enviar tu solicitud");
+      if (!res.ok || !data?.ok) {
+        throw new Error(data?.error || "No se pudo enviar tu solicitud");
+      }
 
       toast({
         title: "Gracias por tu interés",
