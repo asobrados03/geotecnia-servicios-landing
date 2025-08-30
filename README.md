@@ -60,6 +60,15 @@ This project is built with:
 - shadcn-ui
 - Tailwind CSS
 
+## Environment Variables
+
+The contact form can optionally use [Google reCAPTCHA](https://www.google.com/recaptcha/about/). To enable it, define the following variables:
+
+- `RECAPTCHA_SECRET` – server-side secret used to verify tokens.
+- `NEXT_PUBLIC_RECAPTCHA_SITE_KEY` – site key exposed to the client.
+
+If these variables are not set, the form will still submit but reCAPTCHA will be skipped.
+
 ## How can I deploy this project?
 
 Simply open [Lovable](https://lovable.dev/projects/d0de79a3-a689-4052-9509-e47cea7a97e5) and click on Share -> Publish.

@@ -22,9 +22,7 @@ const scrollTo = (id: string) => {
 
 const Index = () => {
   const heroRef = useRef<HTMLDivElement | null>(null);
-  const siteKey =
-    import.meta.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY ??
-    import.meta.env.VITE_RECAPTCHA_SITE_KEY;
+  const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
 
   useEffect(() => {
     // Load reCAPTCHA v3 script dynamically if site key is configured
@@ -122,13 +120,11 @@ const Index = () => {
     }
 
     try {
-      if (!siteKey || !window.grecaptcha) {
-        toast({ title: "Verificación requerida", description: "reCAPTCHA no disponible." });
-        return;
+      let recaptchaToken: string | undefined;
+      if (siteKey && window.grecaptcha) {
+        await new Promise<void>((resolve) => window.grecaptcha!.ready(resolve));
+        recaptchaToken = await window.grecaptcha!.execute(siteKey, { action: "submit" });
       }
-
-      await new Promise<void>((resolve) => window.grecaptcha!.ready(resolve));
-      const recaptchaToken = await window.grecaptcha!.execute(siteKey, { action: "submit" });
 
       const res = await fetch("/api/contact", {
         method: "POST",
