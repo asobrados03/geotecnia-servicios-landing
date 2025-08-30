@@ -22,8 +22,17 @@ const scrollTo = (id: string) => {
 
 const Index = () => {
   const heroRef = useRef<HTMLDivElement | null>(null);
+  const siteKey = (import.meta as any).env?.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || (import.meta as any).env?.VITE_RECAPTCHA_SITE_KEY;
 
   useEffect(() => {
+    // Load reCAPTCHA v3 script dynamically if site key is configured
+    if (siteKey && !(window as any).grecaptcha) {
+      const script = document.createElement("script");
+      script.src = `https://www.google.com/recaptcha/api.js?render=${encodeURIComponent(siteKey)}`;
+      script.async = true;
+      document.head.appendChild(script);
+    }
+
     const el = heroRef.current;
     if (!el) return;
 
@@ -83,16 +92,69 @@ const Index = () => {
       .map(([, url]) => url);
   }, []);
 
-  const handleSubmit: React.FormEventHandler<HTMLFormElement> = (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
-    const form = new FormData(e.currentTarget);
-    const valor = form.get("nombre");
-    const nombre = typeof valor === "string" ? valor : "";
-    toast({
-      title: "Gracias por tu interés",
-      description: `${nombre ? nombre + ", " : ""}hemos recibido tu mensaje y te responderemos en menos de 24h.`,
-    });
-    (e.target as HTMLFormElement).reset();
+    const formEl = e.currentTarget;
+    const form = new FormData(formEl);
+
+    // Honeypot anti-spam: if filled, drop silently
+    const website = form.get("website");
+    if (typeof website === "string" && website.trim() !== "") {
+      (e.target as HTMLFormElement).reset();
+      return;
+    }
+
+    const nombreRaw = form.get("nombre");
+    const nombre = typeof nombreRaw === "string" ? nombreRaw.trim() : "";
+    const emailRaw = form.get("email");
+    const email = typeof emailRaw === "string" ? emailRaw.trim() : "";
+    const empresaRaw = form.get("empresa");
+    const empresa = typeof empresaRaw === "string" ? empresaRaw.trim() : "";
+    const mensajeRaw = form.get("mensaje");
+    const mensaje = typeof mensajeRaw === "string" ? mensajeRaw.trim() : "";
+
+    if (!nombre || !email || !mensaje) {
+      toast({ title: "Faltan datos", description: "Por favor, completa nombre, email y mensaje." });
+      return;
+    }
+
+    try {
+      // Obtain reCAPTCHA v3 token if available
+      let recaptchaToken: string | undefined;
+      const g: any = (window as any).grecaptcha;
+      if (siteKey && g && typeof g.ready === "function") {
+        try {
+          recaptchaToken = await new Promise<string | undefined>((resolve) => {
+            g.ready(async () => {
+              try {
+                const token = await g.execute(siteKey, { action: "contact_form" });
+                resolve(token);
+              } catch {
+                resolve(undefined);
+              }
+            });
+          });
+        } catch {
+          recaptchaToken = undefined;
+        }
+      }
+
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ nombre, email, empresa: empresa || null, mensaje, recaptchaToken })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || "No se pudo enviar tu solicitud");
+
+      toast({
+        title: "Gracias por tu interés",
+        description: `${nombre ? nombre + ", " : ""}hemos recibido tu mensaje y te responderemos en menos de 24h.`,
+      });
+      formEl.reset();
+    } catch (err: any) {
+      toast({ title: "Error al enviar", description: err?.message || "Intenta de nuevo en unos minutos." });
+    }
   };
 
   return (
@@ -306,6 +368,8 @@ const Index = () => {
           </header>
 
           <form onSubmit={handleSubmit} className="mx-auto grid max-w-2xl gap-4 rounded-xl border bg-card p-6 shadow" aria-label="Formulario de contacto">
+            {/* Honeypot anti-spam field (hidden for humans) */}
+            <input type="text" name="website" tabIndex={-1} autoComplete="off" className="hidden" aria-hidden="true" />
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="grid gap-2">
                 <label htmlFor="nombre" className="text-sm font-medium">Nombre</label>
