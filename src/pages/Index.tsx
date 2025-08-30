@@ -172,8 +172,8 @@ const Index = () => {
               src={logoUrl}
               alt="Logo de Geotecnia y Servicios (G&S)"
               className="h-10 w-10 rounded-sm object-contain"
-              width={40}
-              height={40}
+              width={50}
+              height={50}
             />
             <span className="font-extrabold tracking-tight">Geotecnia y Servicios</span>
           </a>
