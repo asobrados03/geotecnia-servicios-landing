@@ -8,36 +8,16 @@ import { createClient } from "@supabase/supabase-js";
 // - SUPABASE_SERVICE_ROLE (server-side, DO NOT expose in client)
 // - CONTACT_TO_EMAIL (e.g., geotecniayservicios@gmail.com)
 // - CONTACT_FROM_EMAIL (e.g., solicitudes@tudominio.com)
-// - RECAPTCHA_SECRET (if using reCAPTCHA v2/3)
 
 // Minimal email validator
 const isEmail = (s: string) => /.+@.+\..+/.test(s);
-
-// Optional: verify reCAPTCHA token server-side
-async function verifyRecaptcha(token?: string) {
-  const secret = process.env.RECAPTCHA_SECRET;
-  if (!secret) return true; // if not configured, skip
-  if (!token) return false;
-
-  try {
-    const res = await fetch("https://www.google.com/recaptcha/api/siteverify", {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({ secret, response: token }),
-    });
-    const data = (await res.json()) as { success?: boolean; score?: number };
-    return !!data.success && (typeof data.score !== "number" || data.score >= 0.5);
-  } catch {
-    return false;
-  }
-}
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const { nombre, email, empresa, mensaje, recaptchaToken } = req.body || {};
+  const { nombre, email, empresa, mensaje } = req.body || {};
 
   if (!nombre || !email || !mensaje) {
     return res.status(400).json({ error: "Faltan campos obligatorios" });
@@ -49,12 +29,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Basic rate limit (per IP) using in-memory map (resets on cold start). For production, use KV/Upstash if needed.
   // const ip = (req.headers["x-forwarded-for"] || req.socket?.remoteAddress || "").toString();
   // No persistent store here to keep example simple.
-
-  // Verify captcha if configured
-  const captchaOk = await verifyRecaptcha(recaptchaToken);
-  if (!captchaOk) {
-    return res.status(400).json({ error: "Verificación anti-spam fallida" });
-  }
 
   // Insert into Supabase
   const supabaseUrl = process.env.SUPABASE_URL;

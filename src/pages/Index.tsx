@@ -22,18 +22,8 @@ const scrollTo = (id: string) => {
 
 const Index = () => {
   const heroRef = useRef<HTMLDivElement | null>(null);
-  const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
 
   useEffect(() => {
-    // Load reCAPTCHA v3 script dynamically if site key is configured
-    if (siteKey && !window.grecaptcha) {
-      const script = document.createElement("script");
-      script.src = `https://www.google.com/recaptcha/api.js?render=${siteKey}`;
-      script.async = true;
-      script.defer = true;
-      document.head.appendChild(script);
-    }
-
     const el = heroRef.current;
     if (!el) return;
 
@@ -47,7 +37,7 @@ const Index = () => {
     };
     el.addEventListener("mousemove", handle);
     return () => el.removeEventListener("mousemove", handle);
-  }, [siteKey]);
+  }, []);
 
   const services = useMemo(
     () => [
@@ -120,16 +110,10 @@ const Index = () => {
     }
 
     try {
-      let recaptchaToken: string | undefined;
-      if (siteKey && window.grecaptcha) {
-        await new Promise<void>((resolve) => window.grecaptcha!.ready(resolve));
-        recaptchaToken = await window.grecaptcha!.execute(siteKey, { action: "submit" });
-      }
-
       const res = await fetch("/api/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nombre, email, empresa: empresa || null, mensaje, recaptchaToken })
+        body: JSON.stringify({ nombre, email, empresa: empresa || null, mensaje })
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data?.ok) {
