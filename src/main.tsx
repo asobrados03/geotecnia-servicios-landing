@@ -2,6 +2,7 @@ import { createRoot } from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
 import logoUrl from '@/assets/LOGO.png'
+import { Analytics } from '@vercel/analytics/react'
 
 // Set favicon to the project logo (PNG) without distortion
 const ensureFavicon = (href: string) => {
@@ -17,4 +18,9 @@ const ensureFavicon = (href: string) => {
 
 ensureFavicon(logoUrl);
 
-createRoot(document.getElementById("root")).render(<App />);
+createRoot(document.getElementById("root")).render(
+  <>
+    <App />
+    <Analytics />
+  </>
+);
