@@ -30,8 +30,9 @@ const Index = () => {
     // Load reCAPTCHA v3 script dynamically if site key is configured
     if (siteKey && !window.grecaptcha) {
       const script = document.createElement("script");
-      script.src = `https://www.google.com/recaptcha/api.js?render=${encodeURIComponent(siteKey)}`;
+      script.src = `https://www.google.com/recaptcha/api.js?render=${siteKey}`;
       script.async = true;
+      script.defer = true;
       document.head.appendChild(script);
     }
 
@@ -121,25 +122,13 @@ const Index = () => {
     }
 
     try {
-      // Obtain reCAPTCHA v3 token if available
-      let recaptchaToken: string | undefined;
-      const g = window.grecaptcha;
-      if (siteKey && g && typeof g.ready === "function") {
-        try {
-          recaptchaToken = await new Promise<string | undefined>((resolve) => {
-            g.ready(async () => {
-              try {
-                const token = await g.execute(siteKey, { action: "contact_form" });
-                resolve(token);
-              } catch {
-                resolve(undefined);
-              }
-            });
-          });
-        } catch {
-          recaptchaToken = undefined;
-        }
+      if (!siteKey || !window.grecaptcha) {
+        toast({ title: "Verificación requerida", description: "reCAPTCHA no disponible." });
+        return;
       }
+
+      await new Promise<void>((resolve) => window.grecaptcha!.ready(resolve));
+      const recaptchaToken = await window.grecaptcha!.execute(siteKey, { action: "submit" });
 
       const res = await fetch("/api/contact", {
         method: "POST",
