@@ -94,22 +94,27 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const empresaLine = empresa ? `\nEmpresa: ${empresa}` : "";
   const bodyText = `Nueva solicitud de presupuesto:\n\nNombre: ${nombre}\nEmail: ${email}${empresaLine}\n\nMensaje:\n${mensaje}\n\n—\nEste correo fue enviado automáticamente por la web.`;
 
-  // Use Reply-To so replying goes to the client
-  await resend.emails.send({
-    from: fromEmail,
-    to: toEmail,
-    subject,
-    text: bodyText,
-    headers: { "Reply-To": email },
-  });
+  try {
+    // Use Reply-To so replying goes to the client
+    await resend.emails.send({
+      from: fromEmail,
+      to: toEmail,
+      subject,
+      text: bodyText,
+      headers: { "Reply-To": email },
+    });
 
-  // Auto-response to client
-  await resend.emails.send({
-    from: fromEmail,
-    to: email,
-    subject: "Hemos recibido tu solicitud",
-    text: `Hola ${nombre},\n\nGracias por contactarnos. Hemos recibido tu solicitud y te responderemos en menos de 24h.\n\nUn saludo,\nGeotecnia y Servicios`,
-  });
+    // Auto-response to client
+    await resend.emails.send({
+      from: fromEmail,
+      to: email,
+      subject: "Hemos recibido tu solicitud",
+      text: `Hola ${nombre},\n\nGracias por contactarnos. Hemos recibido tu solicitud y te responderemos en menos de 24h.\n\nUn saludo,\nGeotecnia y Servicios`,
+    });
+  } catch (err) {
+    console.error("Error enviando correos de contacto", err);
+    return res.status(200).json({ ok: true, warning: "No se pudieron enviar los correos" });
+  }
 
   return res.status(200).json({ ok: true });
 }
