@@ -22,11 +22,13 @@ const scrollTo = (id: string) => {
 
 const Index = () => {
   const heroRef = useRef<HTMLDivElement | null>(null);
-  const siteKey = (import.meta as any).env?.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || (import.meta as any).env?.VITE_RECAPTCHA_SITE_KEY;
+  const siteKey =
+    import.meta.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY ??
+    import.meta.env.VITE_RECAPTCHA_SITE_KEY;
 
   useEffect(() => {
     // Load reCAPTCHA v3 script dynamically if site key is configured
-    if (siteKey && !(window as any).grecaptcha) {
+    if (siteKey && !window.grecaptcha) {
       const script = document.createElement("script");
       script.src = `https://www.google.com/recaptcha/api.js?render=${encodeURIComponent(siteKey)}`;
       script.async = true;
@@ -46,7 +48,7 @@ const Index = () => {
     };
     el.addEventListener("mousemove", handle);
     return () => el.removeEventListener("mousemove", handle);
-  }, []);
+  }, [siteKey]);
 
   const services = useMemo(
     () => [
@@ -121,7 +123,7 @@ const Index = () => {
     try {
       // Obtain reCAPTCHA v3 token if available
       let recaptchaToken: string | undefined;
-      const g: any = (window as any).grecaptcha;
+      const g = window.grecaptcha;
       if (siteKey && g && typeof g.ready === "function") {
         try {
           recaptchaToken = await new Promise<string | undefined>((resolve) => {
@@ -152,8 +154,9 @@ const Index = () => {
         description: `${nombre ? nombre + ", " : ""}hemos recibido tu mensaje y te responderemos en menos de 24h.`,
       });
       formEl.reset();
-    } catch (err: any) {
-      toast({ title: "Error al enviar", description: err?.message || "Intenta de nuevo en unos minutos." });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Intenta de nuevo en unos minutos.";
+      toast({ title: "Error al enviar", description: message });
     }
   };
 
