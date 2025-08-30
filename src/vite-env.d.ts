@@ -12,11 +12,6 @@ interface ImportMeta {
 interface Window {
   grecaptcha?: {
     ready(cb: () => void): void
-    render(
-      container: string | HTMLElement,
-      opts: { sitekey: string; callback: (token: string) => void }
-    ): number
-    reset(id?: number): void
-    execute?(siteKey: string, opts: { action: string }): Promise<string>
+    execute(siteKey: string, opts: { action: string }): Promise<string>
   }
 }

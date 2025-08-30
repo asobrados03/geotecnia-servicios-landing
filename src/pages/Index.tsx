@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import heroImage from "@/assets/hero-geotech.jpg";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -22,13 +22,11 @@ const scrollTo = (id: string) => {
 
 const Index = () => {
   const heroRef = useRef<HTMLDivElement | null>(null);
-  const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
   const siteKey =
     import.meta.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY ??
     import.meta.env.VITE_RECAPTCHA_SITE_KEY;
 
   useEffect(() => {
-
     // Load reCAPTCHA v3 script dynamically if site key is configured
     if (siteKey && !window.grecaptcha) {
       const script = document.createElement("script");
@@ -126,7 +124,6 @@ const Index = () => {
     try {
       if (!siteKey || !window.grecaptcha) {
         toast({ title: "Verificación requerida", description: "reCAPTCHA no disponible." });
-
         return;
       }
 
@@ -148,13 +145,10 @@ const Index = () => {
         description: `${nombre ? nombre + ", " : ""}hemos recibido tu mensaje y te responderemos en menos de 24h.`,
       });
       formEl.reset();
-      setRecaptchaToken(null);
-      window.grecaptcha?.reset();
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Intenta de nuevo en unos minutos.";
       toast({ title: "Error al enviar", description: message });
-      window.grecaptcha?.reset();
-      setRecaptchaToken(null);
+      
     }
   };
 
@@ -389,7 +383,6 @@ const Index = () => {
               <label htmlFor="mensaje" className="text-sm font-medium">Mensaje</label>
               <textarea id="mensaje" name="mensaje" rows={4} required className="rounded-md border bg-background px-3 py-2 outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" />
             </div>
-            <div id="recaptcha-container" className="mt-2 flex justify-center" />
             <div className="flex items-center justify-between gap-3">
               <Button type="submit" variant="hero" size="lg">Enviar</Button>
               <a href="mailto:geotecniayservicios@gmail.com" className="text-sm text-muted-foreground hover:text-foreground">o escríbenos a geotecniayservicios@gmail.com</a>
