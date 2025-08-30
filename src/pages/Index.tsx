@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import heroImage from "@/assets/hero-geotech.jpg";
+import logoUrl from "@/assets/LOGO.png";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,6 +23,7 @@ const scrollTo = (id: string) => {
 
 const Index = () => {
   const heroRef = useRef<HTMLDivElement | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     const el = heroRef.current;
@@ -85,6 +87,8 @@ const Index = () => {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
+    if (isSubmitting) return;
+    setIsSubmitting(true);
     const formEl = e.currentTarget;
     const form = new FormData(formEl);
 
@@ -106,6 +110,7 @@ const Index = () => {
 
     if (!nombre || !email || !mensaje) {
       toast({ title: "Faltan datos", description: "Por favor, completa nombre, email y mensaje." });
+      setIsSubmitting(false);
       return;
     }
 
@@ -128,7 +133,8 @@ const Index = () => {
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Intenta de nuevo en unos minutos.";
       toast({ title: "Error al enviar", description: message });
-      
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -137,7 +143,7 @@ const Index = () => {
       <header className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto px-4 md:px-6 flex h-16 items-center justify-between">
           <a href="/" className="flex items-center gap-2" aria-label="Geotecnia y Servicios">
-            <img src="/src/assets/LOGO.png" alt="Logo de Geotecnia y Servicios (G&S)" className="h-8 w-8 rounded-sm object-contain" width={32} height={32} />
+            <img src={logoUrl} alt="Logo de Geotecnia y Servicios (G&S)" className="h-8 w-8 rounded-sm object-contain" width={32} height={32} />
             <span className="font-extrabold tracking-tight">Geotecnia y Servicios</span>
           </a>
           <nav aria-label="Navegación principal" className="hidden gap-6 md:flex">
@@ -364,7 +370,9 @@ const Index = () => {
               <textarea id="mensaje" name="mensaje" rows={4} required className="rounded-md border bg-background px-3 py-2 outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" />
             </div>
             <div className="flex items-center justify-between gap-3">
-              <Button type="submit" variant="hero" size="lg">Enviar</Button>
+              <Button type="submit" variant="hero" size="lg" disabled={isSubmitting}>
+                {isSubmitting ? "Enviando" : "Enviar"}
+              </Button>
               <a href="mailto:geotecniayservicios@gmail.com" className="text-sm text-muted-foreground hover:text-foreground">o escríbenos a geotecniayservicios@gmail.com</a>
             </div>
           </form>
