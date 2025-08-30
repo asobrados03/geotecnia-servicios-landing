@@ -14,7 +14,32 @@ import {
   Building2,
   LineChart,
   ChevronRight,
+  Loader2,
 } from "lucide-react";
+
+const GalleryImage = ({ src }: { src: string }) => {
+  const [loaded, setLoaded] = useState(false);
+  const fileName = src.split("/").pop() || "Imagen";
+  const alt = fileName.replace(/[-_]/g, " ").replace(/\.[^.]+$/, "");
+  return (
+    <CarouselItem className="basis-full sm:basis-1/2 lg:basis-1/3">
+      <div className="relative overflow-hidden rounded-md border bg-card aspect-[4/3]">
+        {!loaded && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          </div>
+        )}
+        <img
+          src={src}
+          alt={alt}
+          loading="lazy"
+          onLoad={() => setLoaded(true)}
+          className={`h-full w-full object-cover transition-opacity duration-300 ${loaded ? "opacity-100" : "opacity-0"}`}
+        />
+      </div>
+    </CarouselItem>
+  );
+};
 
 const scrollTo = (id: string) => {
   const el = document.getElementById(id);
@@ -143,7 +168,13 @@ const Index = () => {
       <header className="sticky top-0 z-40 w-full border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto px-4 md:px-6 flex h-16 items-center justify-between">
           <a href="/" className="flex items-center gap-2" aria-label="Geotecnia y Servicios">
-            <img src={logoUrl} alt="Logo de Geotecnia y Servicios (G&S)" className="h-8 w-8 rounded-sm object-contain" width={32} height={32} />
+            <img
+              src={logoUrl}
+              alt="Logo de Geotecnia y Servicios (G&S)"
+              className="h-10 w-10 rounded-sm object-contain"
+              width={40}
+              height={40}
+            />
             <span className="font-extrabold tracking-tight">Geotecnia y Servicios</span>
           </a>
           <nav aria-label="Navegación principal" className="hidden gap-6 md:flex">
@@ -248,17 +279,9 @@ const Index = () => {
 
           <Carousel className="mx-auto max-w-6xl" opts={{ align: "start", loop: true }}>
             <CarouselContent>
-              {galleryImages.map((src) => {
-                const fileName = src.split('/').pop() || 'Imagen';
-                const alt = fileName.replace(/[-_]/g, ' ').replace(/\.[^.]+$/, '');
-                return (
-                  <CarouselItem key={src} className="basis-full sm:basis-1/2 lg:basis-1/3">
-                    <div className="overflow-hidden rounded-md border bg-card aspect-[4/3]">
-                      <img src={src} alt={alt} loading="lazy" className="h-full w-full object-cover" />
-                    </div>
-                  </CarouselItem>
-                );
-              })}
+              {galleryImages.map((src) => (
+                <GalleryImage key={src} src={src} />
+              ))}
             </CarouselContent>
             <CarouselPrevious aria-label="Imagen anterior" className="left-2 lg:-left-12" />
             <CarouselNext aria-label="Imagen siguiente" className="right-2 lg:-right-12" />
