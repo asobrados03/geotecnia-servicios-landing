@@ -71,3 +71,10 @@ Yes, you can!
 To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
 
 Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+
+## Environment variables
+
+The contact form uses Google reCAPTCHA v3. Configure these variables in your environment:
+
+- `RECAPTCHA_SITE_KEY`: Public site key loaded on the client (e.g., `6LeUXLgrAAAAAB_-ZMxY4bPZALX7AQbR8m6UcL6t`).
+- `RECAPTCHA_SECRET_KEY`: Secret key used on the server to verify tokens.

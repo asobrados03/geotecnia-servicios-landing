@@ -7,8 +7,11 @@ import { componentTagger } from "lovable-tagger";
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
   const publicEnv = Object.fromEntries(
-    Object.entries(env).filter(([key]) =>
-      key.startsWith("VITE_") || key.startsWith("NEXT_PUBLIC_")
+    Object.entries(env).filter(
+      ([key]) =>
+        key.startsWith("VITE_") ||
+        key.startsWith("NEXT_PUBLIC_") ||
+        key.startsWith("RECAPTCHA_")
     )
   );
 
@@ -17,7 +20,7 @@ export default defineConfig(({ mode }) => {
       host: "::",
       port: 8080,
     },
-    envPrefix: ["VITE_", "NEXT_PUBLIC_"],
+    envPrefix: ["VITE_", "NEXT_PUBLIC_", "RECAPTCHA_"],
     define: {
       "process.env": JSON.stringify(publicEnv),
     },
