@@ -76,5 +76,5 @@ Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-trick
 
 The contact form uses Google reCAPTCHA v3. Configure these variables in your environment:
 
-- `VITE_RECAPTCHA_SITE_KEY`: Public site key loaded on the client.
+- `RECAPTCHA_SITE_KEY`: Public site key loaded on the client (e.g., `6LeUXLgrAAAAAB_-ZMxY4bPZALX7AQbR8m6UcL6t`).
 - `RECAPTCHA_SECRET_KEY`: Secret key used on the server to verify tokens.

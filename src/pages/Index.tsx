@@ -75,7 +75,7 @@ const Index = () => {
   }, []);
 
   useEffect(() => {
-    const siteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
+    const siteKey = import.meta.env.RECAPTCHA_SITE_KEY;
     if (!siteKey) return;
     const script = document.createElement("script");
     script.src = `https://www.google.com/recaptcha/api.js?render=${siteKey}`;
@@ -163,7 +163,7 @@ const Index = () => {
     try {
       const grecaptcha = window.grecaptcha;
       token = grecaptcha
-        ? await grecaptcha.execute(import.meta.env.VITE_RECAPTCHA_SITE_KEY, { action: "contact" })
+        ? await grecaptcha.execute(import.meta.env.RECAPTCHA_SITE_KEY, { action: "contact" })
         : "";
     } catch {
       token = "";
