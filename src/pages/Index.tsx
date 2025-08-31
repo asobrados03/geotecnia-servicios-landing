@@ -75,7 +75,7 @@ const Index = () => {
   }, []);
 
   useEffect(() => {
-    const siteKey = import.meta.env.RECAPTCHA_SITE_KEY;
+    const siteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
     if (!siteKey) return;
     const script = document.createElement("script");
     script.src = `https://www.google.com/recaptcha/api.js?render=${siteKey}`;
@@ -130,6 +130,31 @@ const Index = () => {
       .map(([, url]) => url);
   }, []);
 
+  // Helper to extract and validate form data
+  function extractFormData(form: FormData) {
+    const nombreRaw = form.get("nombre");
+    const nombre = typeof nombreRaw === "string" ? nombreRaw.trim() : "";
+    const emailRaw = form.get("email");
+    const email = typeof emailRaw === "string" ? emailRaw.trim() : "";
+    const empresaRaw = form.get("empresa");
+    const empresa = typeof empresaRaw === "string" ? empresaRaw.trim() : "";
+    const mensajeRaw = form.get("mensaje");
+    const mensaje = typeof mensajeRaw === "string" ? mensajeRaw.trim() : "";
+    return { nombre, email, empresa, mensaje };
+  }
+
+  // Helper to get reCAPTCHA token
+  async function getRecaptchaToken(): Promise<string> {
+    try {
+      const grecaptcha = window.grecaptcha;
+      return grecaptcha
+        ? await grecaptcha.execute(import.meta.env.VITE_RECAPTCHA_SITE_KEY, { action: "contact" })
+        : "";
+    } catch {
+      return "";
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
     if (isSubmitting) return;
@@ -144,14 +169,7 @@ const Index = () => {
       return;
     }
 
-    const nombreRaw = form.get("nombre");
-    const nombre = typeof nombreRaw === "string" ? nombreRaw.trim() : "";
-    const emailRaw = form.get("email");
-    const email = typeof emailRaw === "string" ? emailRaw.trim() : "";
-    const empresaRaw = form.get("empresa");
-    const empresa = typeof empresaRaw === "string" ? empresaRaw.trim() : "";
-    const mensajeRaw = form.get("mensaje");
-    const mensaje = typeof mensajeRaw === "string" ? mensajeRaw.trim() : "";
+    const { nombre, email, empresa, mensaje } = extractFormData(form);
 
     if (!nombre || !email || !mensaje) {
       toast({ title: "Faltan datos", description: "Por favor, completa nombre, email y mensaje." });
@@ -159,15 +177,7 @@ const Index = () => {
       return;
     }
 
-    let token = "";
-    try {
-      const grecaptcha = window.grecaptcha;
-      token = grecaptcha
-        ? await grecaptcha.execute(import.meta.env.RECAPTCHA_SITE_KEY, { action: "contact" })
-        : "";
-    } catch {
-      token = "";
-    }
+    const token = await getRecaptchaToken();
     if (!token) {
       toast({ title: "Error de verificación", description: "No se pudo verificar reCAPTCHA." });
       setIsSubmitting(false);
