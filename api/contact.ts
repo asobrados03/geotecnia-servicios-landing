@@ -17,13 +17,35 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const { nombre, email, empresa, mensaje } = req.body || {};
+  const { nombre, email, empresa, mensaje, token } = req.body || {};
 
   if (!nombre || !email || !mensaje) {
     return res.status(400).json({ error: "Faltan campos obligatorios" });
   }
   if (!isEmail(String(email))) {
     return res.status(400).json({ error: "Email inválido" });
+  }
+
+  const secret = process.env.RECAPTCHA_SECRET_KEY;
+  if (!secret) {
+    return res.status(500).json({ error: "reCAPTCHA no configurado" });
+  }
+  if (!token) {
+    return res.status(400).json({ error: "Falta token reCAPTCHA" });
+  }
+  try {
+    const params = new URLSearchParams({ secret, response: String(token) });
+    const verifyRes = await fetch("https://www.google.com/recaptcha/api/siteverify", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: params.toString(),
+    });
+    const verifyData = await verifyRes.json();
+    if (!verifyData.success || (verifyData.score ?? 0) < 0.5) {
+      return res.status(400).json({ error: "Verificación reCAPTCHA fallida" });
+    }
+  } catch {
+    return res.status(400).json({ error: "No se pudo verificar reCAPTCHA" });
   }
 
   // Basic rate limit (per IP) using in-memory map (resets on cold start). For production, use KV/Upstash if needed.

@@ -17,6 +17,14 @@ import {
   Loader2,
 } from "lucide-react";
 
+declare global {
+  interface Window {
+    grecaptcha?: {
+      execute(siteKey: string, options: { action: string }): Promise<string>;
+    };
+  }
+}
+
 const GalleryImage = ({ src }: { src: string }) => {
   const [loaded, setLoaded] = useState(false);
   const fileName = src.split("/").pop() || "Imagen";
@@ -64,6 +72,18 @@ const Index = () => {
     };
     el.addEventListener("mousemove", handle);
     return () => el.removeEventListener("mousemove", handle);
+  }, []);
+
+  useEffect(() => {
+    const siteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
+    if (!siteKey) return;
+    const script = document.createElement("script");
+    script.src = `https://www.google.com/recaptcha/api.js?render=${siteKey}`;
+    script.async = true;
+    document.body.appendChild(script);
+    return () => {
+      document.body.removeChild(script);
+    };
   }, []);
 
   const services = useMemo(
@@ -139,11 +159,26 @@ const Index = () => {
       return;
     }
 
+    let token = "";
+    try {
+      const grecaptcha = window.grecaptcha;
+      token = grecaptcha
+        ? await grecaptcha.execute(import.meta.env.VITE_RECAPTCHA_SITE_KEY, { action: "contact" })
+        : "";
+    } catch {
+      token = "";
+    }
+    if (!token) {
+      toast({ title: "Error de verificación", description: "No se pudo verificar reCAPTCHA." });
+      setIsSubmitting(false);
+      return;
+    }
+
     try {
       const res = await fetch("/api/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nombre, email, empresa: empresa || null, mensaje })
+        body: JSON.stringify({ nombre, email, empresa: empresa || null, mensaje, token })
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data?.ok) {
