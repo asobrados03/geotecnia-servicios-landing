@@ -125,7 +125,10 @@ const Index = () => {
 
   // Cargar todas las imágenes ubicadas en assets/gallery para la galería
   const galleryImages = useMemo(() => {
-    const modules = import.meta.glob('/src/assets/gallery/*.{png,jpg,jpeg,webp}', { eager: true, as: 'url' });
+    const modules = import.meta.glob('@/assets/gallery/*.{png,jpg,jpeg,webp}', {
+      eager: true,
+      import: 'url',
+    }) as Record<string, string>;
     return Object.entries(modules)
       .sort((a, b) => a[0].localeCompare(b[0]))
       .map(([, url]) => url);
