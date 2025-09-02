@@ -127,7 +127,8 @@ const Index = () => {
   const galleryImages = useMemo(() => {
     const modules = import.meta.glob('@/assets/gallery/*.{png,jpg,jpeg,webp}', {
       eager: true,
-      import: 'url',
+      import: 'default',
+      query: '?url',
     }) as Record<string, string>;
     return Object.entries(modules)
       .sort((a, b) => a[0].localeCompare(b[0]))
