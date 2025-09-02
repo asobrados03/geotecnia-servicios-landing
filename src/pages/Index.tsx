@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { toast } from "@/hooks/use-toast";
+import { contactSchema, EMAIL_REGEX } from "@/lib/contact-schema";
 import {
   Layers,
   Hammer,
@@ -130,17 +131,21 @@ const Index = () => {
       .map(([, url]) => url);
   }, []);
 
-  // Helper to extract and validate form data
+  // Helper to extract raw form data
   function extractFormData(form: FormData) {
-    const nombreRaw = form.get("nombre");
-    const nombre = typeof nombreRaw === "string" ? nombreRaw.trim() : "";
-    const emailRaw = form.get("email");
-    const email = typeof emailRaw === "string" ? emailRaw.trim() : "";
+    const nombre = form.get("nombre");
+    const email = form.get("email");
     const empresaRaw = form.get("empresa");
-    const empresa = typeof empresaRaw === "string" ? empresaRaw.trim() : "";
-    const mensajeRaw = form.get("mensaje");
-    const mensaje = typeof mensajeRaw === "string" ? mensajeRaw.trim() : "";
-    return { nombre, email, empresa, mensaje };
+    const mensaje = form.get("mensaje");
+    return {
+      nombre: typeof nombre === "string" ? nombre : "",
+      email: typeof email === "string" ? email : "",
+      empresa:
+        typeof empresaRaw === "string" && empresaRaw.trim() !== ""
+          ? empresaRaw
+          : undefined,
+      mensaje: typeof mensaje === "string" ? mensaje : "",
+    };
   }
 
   // Helper to get reCAPTCHA token
@@ -169,13 +174,15 @@ const Index = () => {
       return;
     }
 
-    const { nombre, email, empresa, mensaje } = extractFormData(form);
-
-    if (!nombre || !email || !mensaje) {
-      toast({ title: "Faltan datos", description: "Por favor, completa nombre, email y mensaje." });
+    const raw = extractFormData(form);
+    const parsed = contactSchema.safeParse(raw);
+    if (!parsed.success) {
+      const msg = parsed.error.issues[0]?.message || "Datos inválidos";
+      toast({ title: "Datos inválidos", description: msg });
       setIsSubmitting(false);
       return;
     }
+    const { nombre, email, empresa, mensaje } = parsed.data;
 
     const token = await getRecaptchaToken();
     if (!token) {
@@ -188,7 +195,7 @@ const Index = () => {
       const res = await fetch("/api/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nombre, email, empresa: empresa || null, mensaje, token })
+        body: JSON.stringify({ nombre, email, empresa: empresa ?? null, mensaje, token })
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data?.ok) {
@@ -422,20 +429,47 @@ const Index = () => {
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="grid gap-2">
                 <label htmlFor="nombre" className="text-sm font-medium">Nombre</label>
-                <input id="nombre" name="nombre" required className="h-11 rounded-md border bg-background px-3 outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" />
+                <input
+                  id="nombre"
+                  name="nombre"
+                  required
+                  maxLength={100}
+                  pattern="^[A-Za-zÁÉÍÓÚáéíóúÑñÜü'\\s-]+$"
+                  className="h-11 rounded-md border bg-background px-3 outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                />
               </div>
               <div className="grid gap-2">
                 <label htmlFor="email" className="text-sm font-medium">Email</label>
-                <input id="email" name="email" type="email" required className="h-11 rounded-md border bg-background px-3 outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" />
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  required
+                  pattern={EMAIL_REGEX.source}
+                  maxLength={254}
+                  className="h-11 rounded-md border bg-background px-3 outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                />
               </div>
             </div>
             <div className="grid gap-2">
               <label htmlFor="empresa" className="text-sm font-medium">Empresa (opcional)</label>
-              <input id="empresa" name="empresa" className="h-11 rounded-md border bg-background px-3 outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" />
+              <input
+                id="empresa"
+                name="empresa"
+                maxLength={100}
+                className="h-11 rounded-md border bg-background px-3 outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              />
             </div>
             <div className="grid gap-2">
               <label htmlFor="mensaje" className="text-sm font-medium">Mensaje</label>
-              <textarea id="mensaje" name="mensaje" rows={4} required className="rounded-md border bg-background px-3 py-2 outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2" />
+              <textarea
+                id="mensaje"
+                name="mensaje"
+                rows={4}
+                required
+                maxLength={1000}
+                className="rounded-md border bg-background px-3 py-2 outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              />
             </div>
             <div className="flex items-center justify-between gap-3">
               <Button type="submit" variant="hero" size="lg" disabled={isSubmitting}>

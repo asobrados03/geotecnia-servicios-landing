@@ -1,6 +1,7 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { Resend } from "resend";
 import { createClient } from "@supabase/supabase-js";
+import { contactSchema } from "../src/lib/contact-schema";
 
 // Expected env vars (configure in Vercel Project Settings -> Environment Variables)
 // - RESEND_API_KEY
@@ -9,22 +10,18 @@ import { createClient } from "@supabase/supabase-js";
 // - CONTACT_TO_EMAIL (e.g., geotecniayservicios@gmail.com)
 // - CONTACT_FROM_EMAIL (e.g., solicitudes@tudominio.com)
 
-// Minimal email validator
-const isEmail = (s: string) => /.+@.+\..+/.test(s);
-
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
   const { nombre, email, empresa, mensaje, token } = req.body || {};
-
-  if (!nombre || !email || !mensaje) {
-    return res.status(400).json({ error: "Faltan campos obligatorios" });
+  const parsed = contactSchema.safeParse({ nombre, email, empresa, mensaje });
+  if (!parsed.success) {
+    const msg = parsed.error.issues[0]?.message || "Datos inválidos";
+    return res.status(400).json({ error: msg });
   }
-  if (!isEmail(String(email))) {
-    return res.status(400).json({ error: "Email inválido" });
-  }
+  const { nombre: nombreV, email: emailV, empresa: empresaV, mensaje: mensajeV } = parsed.data;
 
   const secret = process.env.RECAPTCHA_SECRET_KEY;
   if (!secret) {
@@ -61,10 +58,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const supabase = createClient(supabaseUrl, supabaseServiceKey, { auth: { persistSession: false } });
 
   const insertPayload = {
-    nombre: String(nombre),
-    email: String(email),
-    empresa: empresa ? String(empresa) : null,
-    mensaje: String(mensaje),
+    nombre: nombreV,
+    email: emailV,
+    empresa: empresaV ?? null,
+    mensaje: mensajeV,
     created_at: new Date().toISOString(),
   };
 
@@ -86,9 +83,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const resend = new Resend(resendKey);
 
   // Notification to professional
-  const subject = `Nueva solicitud de presupuesto de ${nombre}`;
-  const empresaLine = empresa ? `\nEmpresa: ${empresa}` : "";
-  const bodyText = `Nueva solicitud de presupuesto:\n\nNombre: ${nombre}\nEmail: ${email}${empresaLine}\n\nMensaje:\n${mensaje}\n\n—\nEste correo fue enviado automáticamente por la web.`;
+  const subject = `Nueva solicitud de presupuesto de ${nombreV}`;
+  const empresaLine = empresaV ? `\nEmpresa: ${empresaV}` : "";
+  const bodyText = `Nueva solicitud de presupuesto:\n\nNombre: ${nombreV}\nEmail: ${emailV}${empresaLine}\n\nMensaje:\n${mensajeV}\n\n—\nEste correo fue enviado automáticamente por la web.`;
 
   try {
     // Use Reply-To so replying goes to the client
@@ -97,15 +94,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       to: toEmail,
       subject,
       text: bodyText,
-      headers: { "Reply-To": email },
+      headers: { "Reply-To": emailV },
     });
 
     // Auto-response to client
     await resend.emails.send({
       from: fromEmail,
-      to: email,
+      to: emailV,
       subject: "Hemos recibido tu solicitud",
-      text: `Hola ${nombre},\n\nGracias por contactarnos. Hemos recibido tu solicitud y te responderemos en menos de 24h.\n\nUn saludo,\nGeotecnia y Servicios`,
+      text: `Hola ${nombreV},\n\nGracias por contactarnos. Hemos recibido tu solicitud y te responderemos en menos de 24h.\n\nUn saludo,\nGeotecnia y Servicios`,
     });
   } catch (err) {
     console.error("Error enviando correos de contacto", err);
