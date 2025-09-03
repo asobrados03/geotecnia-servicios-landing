@@ -9,6 +9,7 @@
     "paths": {
       "@/*": ["./src/*"]
     },
+    "module": "ESNext",
     "noImplicitAny": false,
     "noUnusedParameters": false,
     "skipLibCheck": true,
