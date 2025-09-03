@@ -402,18 +402,62 @@ desarrollo, así como para ejecutar las pruebas y desplegar en producción:
 
 ## Consideraciones de diseño, seguridad y rendimiento
 
-* Validación compartida cliente/servidor con Zod.
-* Seguridad: reCAPTCHA v3 + honeypot.
-* No exponer claves sensibles en cliente.
-* Problema actual: guardado en BD y envío de correo no son atómicos.
-* Optimización: carga rápida con Vercel CDN, lazy loading, Tailwind purga CSS.
-* Escalabilidad automática vía Vercel + servicios externos.
-* Posibles mejoras: rate limiting, colas asíncronas para emails, logging avanzado.
+En esta sección se discuten algunas decisiones de diseño tomadas en el desarrollo, así como los aspectos no funcionales del sistema (seguridad, rendimiento, fiabilidad) y posibles mejoras futuras.
 
----
-
-## Futuras funcionalidades
-
-* Internacionalización (i18n).
-* Nuevos campos en formulario → actualizar **Zod, React form, Supabase, emails**.
-* Mejor feedback visual en envío.
+* **Reutilización de lógica de validación**: Un acierto en la implementación es definir las reglas de validación de los campos una sola vez (con Zod) y usarlas tanto en el cliente como en el servidor.
+  Esto asegura consistencia: por ejemplo, el criterio de qué se considera un email válido es exactamente el mismo en ambas partes. Evita casos donde el cliente pudiera permitir algo que
+  luego el servidor rechace o viceversa. Además, centraliza futuras modificaciones; si mañana se decide permitir mensajes más largos, con cambiar el esquema en `contact-schema.ts` se
+  actualiza la validación globalmente.
+* **Seguridad y spam**: Dado que el formulario es público, era crucial protegerlo de spam. La combinación de **reCAPTCHA v3** y un campo *honeypot* oculto provee dos capas distintas.
+  reCAPTCHA v3 asigna un puntaje a la interacción; en el código se consideró 0.5 como umbral de corte , lo cual es un valor estándar (por debajo podría ser tráfico sospechoso). Este valor
+  podría ajustarse si se observan falsos positivos/negativos. La solución *honeypot* es simple pero efectiva contra bots muy básicos que rellenan todos los campos; al descartar silenciosamente
+  esos envíos , se evita incluso cargar trabajo en el backend o en reCAPTCHA para ellos. Adicionalmente, en el código se dejó comentada la intención de implementar **rate limiting** por
+  IP . En un entorno de muy alto tráfico malicioso, esto sería recomendable: por ejemplo, limitar a N solicitudes por IP por hora usando un almacén global. La implementación en un
+  entorno serverless debe hacerse con almacenamiento externo (como Redis) porque el estado en memoria no se comparte entre instancias ni persiste entre ejecuciones. Si bien no se
+  implementó aún, es algo a tener en cuenta para robustecer la seguridad.
+* **Uso de claves de servicio (Supabase) y exponer datos mínimos**: La aplicación sigue buenas prácticas al **no exponer credenciales sensibles al cliente**. Todas las operaciones que requieren
+  claves privadas (BD, envío de correo, verificación captcha) se hacen en la función backend. El front-end sólo conoce la clave pública de reCAPTCHA, que por diseño puede estar pública.
+  Además, la comunicación entre front y back intercambia únicamente la información necesaria: no se envían, por ejemplo, direcciones IP del usuario (aunque Vercel podría pasarlas en headers)
+  ni cookies de sesión (no aplica aquí pues no hay autenticación). Los datos de contacto enviados son los proporcionados por el usuario; es importante manejarlos con cuidado en backend: en
+  este caso se insertan directamente en la base de datos y se reenvían por correo sin más procesamiento. Dado que sólo se espera texto plano, el riesgo de inyección es bajo, pero en
+  entornos similares podría considerarse sanitizar o formatear la información antes de enviarla por correo o almacenarla.
+* **Transacciones y consistencia de datos**: Una limitación actual es que las acciones de guardar en BD y enviar correos no están atómicamente ligadas. Si falla el envío de correo después de
+  guardar en la BD, la solicitud queda registrada pero al usuario se le comunicará un error (invitándolo potencialmente a reintentar). Esto podría generar entradas duplicadas en la BD si el
+  usuario vuelve a enviar. Para mitigar esto, se podría en un futuro implementar alguna forma de marcar en la BD el estado de notificación enviada o evitar duplicados exactos. Sin embargo,
+  dado el volumen esperado (moderado) y que un usuario típico no repetirá el formulario idéntico muchas veces, este problema no es crítico. En caso de un fallo de correo, el administrador podría
+  igualmente ver la entrada en Supabase manualmente. Otra mejora podría ser enviar el correo en un segundo plano (por ejemplo, usando una cola de trabajos asíncronos) después de responder al usuario,
+  para que un retraso en el servicio de email no afecte la experiencia del usuario. En un entorno serverless puro esto es complejo sin ayuda de servicios externos (colas
+  en la nube, funciones programadas, etc.).
+* **Rendimiento y experiencia de usuario**: La aplicación está optimizada para carga rápida y buen rendimiento:
+  - Al ser una página estática servida por Vercel, se beneficia de CDN y tiempos de carga bajos globalmente.
+  - Vite realiza *bundling* y minificación; además, la configuración utiliza **code splitting** y **lazy loading** donde aplicable (por ejemplo, las imágenes de la galería se cargan dinámicamente
+    usando `import.meta.glob` , lo que permite que la carga inicial no incluya todas ellas ). También se usan atributos como `loading="lazy"` en imágenes para diferir la carga hasta que scroll las muestre.
+  - Se observa el uso de **React.lazy** o React Router para cargar sólo la página necesaria (aunque actualmente solo hay Index, pero está preparado para más rutas sin recargar toda la app).
+    Tailwind CSS y la librería shadcn/UI ayudan a que el CSS sea altamente reutilizable y optimizado (purgando clases no usadas en producción).
+  - En cuanto al formulario, se provee feedback inmediato, lo cual mejora la percepción de velocidad. El único momento donde el usuario espera es al enviar, mientras se valida captcha y
+    se recibe la respuesta; este tiempo suele ser breve (la verificación captcha y la inserción/correo son rápidas, probablemente <500ms en total típicamente). Aun así, el usuario ve un spinner/
+    estado de envío para saber que está en proceso.
+* **Escalabilidad**: Gracias a la plataforma Vercel, la escalabilidad horizontal es automática. Si muchas personas usan la página simultáneamente, Vercel podrá ejecutar múltiples instancias de
+  la función API en paralelo según demanda. Supabase, al ser un servicio gestionado con PostgreSQL, puede manejar múltiples conexiones concurrentes; habría que asegurarse de tener
+  un plan acorde al volumen de escritura esperado, pero a nivel de código el uso es simple (inserciones individuales). Resend también es un servicio externo capaz de escalar el envío de
+  mails (dentro de los límites de la cuenta/plan contratados). En resumen, el diseño actual debería soportar aumentos moderados de carga sin cambios significativos. En caso de un crecimiento
+  masivo, se podría considerar:
+  - Implementar un mecanismo de **cacheo** o colas si se recibieran ráfagas de solicitudes (por ejemplo, en vez de procesar todo inmediatamente, encolar y procesar secuencialmente para no
+    sobrecargar BD o SMTP). Actualmente no es necesario.
+  - Monitorizar el uso de la función; Vercel impone límites de tiempo de ejecución (10s por defecto en funciones gratuitas). La función actual realiza pocas operaciones y habitualmente termina en
+    menos de 1 segundo, así que está dentro de márgenes amplios.
+* **Registro y monitoreo**: Por defecto, Vercel registra las salidas de consola de las funciones. El código utiliza `console.error` para capturar errores de envío de correo , lo que permite
+  luego revisar en el panel de Vercel (o via `vercel logs`) los detalles de qué falló. No se integró una herramienta específica de monitoreo o alertas (como Sentry, Datadog, etc.), pero dado el
+  propósito, se confía en monitorear manualmente los correos recibidos o revisar la base de datos para confirmar la recepción de solicitudes. Una posible mejora futura sería integrar algún
+  sistema de logging/alerta que notifique si, por ejemplo, la función empieza a fallar repetidamente.
+* **Internacionalización y localización**: La página y todos los mensajes están actualmente en español, acorde al público objetivo. No se implementó soporte multilenguaje. Si se quisiera
+  agregar en un futuro, habría que externalizar los textos a archivos de idioma y quizás duplicar la página para distintas rutas o usar una librería de i18n. Esto complicaría ligeramente el
+  formulario (enviar quizás un campo de idioma, etc.), pero no es prioridad a menos que se apunte a clientes de otros idiomas.
+* **Futuras funcionalidades y mantenimiento**: Cualquier cambio en el formulario (por ejemplo agregar campos nuevos, o cambiar alguno existente) requerirá actualizar:
+  - El esquema Zod en `contact-schema.ts` (y por ende el tipo `ContactForm`).
+  - El formulario en React (añadir el campo con su estado y incluirlo en `extractFormData` y en el JSON enviado).
+  - Posiblemente la tabla en Supabase (añadir la columna correspondiente).
+  - Opcionalmente, el contenido del correo que se envía para incluir el nuevo dato. La documentación y comentarios en el código ayudan a guiar estos cambios; por ejemplo, habría que añadir la nueva
+    variable de entorno si fuese necesaria. Mantener la documentación cerca del código (por ejemplo, este documento en el repo, o al menos referencias en el README) es recomendable para que nuevos
+    desarrolladores entiendan rápidamente el contexto. El archivo WARP.md en el repositorio ya resume parte de esta información en inglés, sirviendo como guía interna para colaboradores, pero sería
+    útil traducir/actualizar esa información en el README principal para futuros mantenedores.
