@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { Resend } from "resend";
 import { createClient } from "@supabase/supabase-js";
-import { contactSchema } from "../src/lib/contact-schema";
+import { contactSchema } from "../src/lib/contact-schema.js";
 
 // Expected env vars (configure in Vercel Project Settings -> Environment Variables)
 // - RESEND_API_KEY
