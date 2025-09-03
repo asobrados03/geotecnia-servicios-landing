@@ -106,7 +106,7 @@ Algunos detalles a resaltar de la estructura:
 En conjunto, la estructura busca mantener una separación clara entre la lógica de frontend (interacción de usuario) y la lógica de backend (procesamiento de solicitudes). Asimismo, aprovecha la reutilización
 de código (e.g., el esquema Zod compartido) para minimizar incoherencias entre cliente y servidor.
 
-### Detalles del formulario de contacto (Front-end)
+## Detalles del formulario de contacto (Front-end)
 
 El formulario de contacto es una pieza clave de la página principal y su implementación enfatiza la validación, usabilidad y protección contra spam en el lado del cliente antes de enviar datos al
 servidor. A continuación se explican sus características y flujo:
@@ -157,41 +157,58 @@ En general, la experiencia de usuario está diseñada para ser fluida: validaci�
 incorporan detalles para mejorar la calidad de la información recibida, como la conversión del email a minúsculas automáticamente , la eliminación de espacios sobrantes en todos los campos
 (`.trim()` en el esquema) y la prevención de doble envío mediante deshabilitación del botón mientras se procesa.
 
-## Formulario de contacto (Front-end)
-
-* **Campos**: Nombre, Email, Empresa (opcional), Mensaje.
-* Validación con **Zod** (reglas de longitud, formato y caracteres válidos).
-* Protección anti-spam: **Honeypot** + reCAPTCHA v3.
-* Feedback al usuario con toasts (errores o éxito).
-* Envío POST `/api/contact`.
-
----
-
 ## API de contacto (Back-end)
 
-**Ruta**: `/api/contact`
-**Método**: `POST`
+El endpoint **POST** `/api/contact` es el único punto de entrada en el lado servidor para la funcionalidad de contacto. A continuación se documentan su contrato (entradas/salidas),
+comportamiento interno, errores posibles y ejemplos de uso:
 
-### Request Body
+### URL y método
+
+- **Ruta**: `/api/contact`
+- **Método HTTP**: POST
+- Descripción: Procesa una solicitud de contacto enviada desde el formulario de la página web. No admite otros métodos; una petición GET u otro verbo recibirá una respuesta *"405 Method Not Allowed"*.
+
+### Autenticación y Seguridad
+
+No se requiere autenticación para consumir este endpoint (está abierto al público de la página), pero se implementan medidas de seguridad para evitar abuso: - Se exige un **token de reCAPTCHA v3** válido en
+cada solicitud, lo que dificulta enormemente los envíos automatizados masivos desde scripts maliciosos. El backend valida este token con Google antes de proceder. - El servidor aplica
+nuevamente la **validación de datos** sobre el payload recibido usando el mismo esquema Zod que en el cliente, garantizando que no se procesarán ni almacenarán datos malformados o faltantes. - Existe
+un comentario en el código referente a la posibilidad de añadir **limitación de tasa (rate limiting)** por IP. En la implementación actual, esto no está activado (el código está comentado), pero sugiere que,
+de ser necesario, se podría usar un almacén persistente (como Redis en Upstash) para evitar múltiples envíos desde la misma IP en corto tiempo. Esto se deja como mejora futura dado que en entornos
+serverless con múltiples instancias, una solución in-memory no sería efectiva (se reinicia con cada frío de la función).ç
+
+### Datos de la solicitud (Request Body)
+
+El cuerpo de la petición debe ser un JSON con la siguiente estructura y campos:
 
 ```json
 {
   "nombre": "Juan Pérez",
   "email": "juan.perez@ejemplo.com",
   "empresa": "Geotec S.A.",
-  "mensaje": "Texto de la solicitud...",
-  "token": "reCAPTCHA_token"
+  "mensaje": "Texto del mensaje de consulta o solicitud...",
+  "token": "reCAPTCHA_token_del_cliente"
 }
 ```
 
-### Responses
+- **nombre**: *(string)* Nombre de la persona que realiza la consulta. Debe cumplir con el formato descrito (2-100 caracteres, solo letras y símbolos permitidos). **Obligatorio**.
+- **email**: *(string)* Correo electrónico de contacto. Debe ser un email válido y de longitud razonable (hasta 254 caracteres). **Obligatorio**.
+- **empresa**: *(string)* Nombre de la empresa o entidad, en caso de que aplique, del solicitante. Campo opcional; si se envía, debe tener 2-100 caracteres. Si el usuario no completa este campo,
+  el cliente envía `empresa: null` en el JSON (o puede omitirse), y el servidor lo interpretará como valor nulo.
+- **mensaje**: *(string)* El cuerpo del mensaje o descripción de la solicitud. Debe tener al menos 10 caracteres útiles (máx. 1000). **Obligatorio**.
+- **token**: *(string)* Token de verificación reCAPTCHA v3 obtenido en el cliente. **Obligatorio**. El servidor usará este valor junto con la clave secreta en una petición a Google para validar la
+  autenticidad del usuario.
+
+Cualquier omisión de un campo obligatorio o violación de las reglas de formato provocará que la API retorne un error de validación en lugar de procesar la solicitud.
+
+### Respuestas (Response)
 
 * `200 OK` → `{ "ok": true }`.
 * `400 Bad Request` → Errores de validación o reCAPTCHA.
 * `405 Method Not Allowed` → Método distinto de POST.
 * `500 Internal Server Error` → Errores de configuración, BD o envío de correos.
 
-Ejemplo cURL:
+### Ejemplo de uso (cURL):
 
 ```bash
 curl -X POST https://<tu-dominio>/api/contact \
@@ -201,7 +218,7 @@ curl -X POST https://<tu-dominio>/api/contact \
 
 ---
 
-## Variables de configuración
+## Variables de configuración y entorno
 
 * `VITE_RECAPTCHA_SITE_KEY` → Clave pública reCAPTCHA.
 * `RECAPTCHA_SECRET_KEY` → Clave secreta reCAPTCHA.
