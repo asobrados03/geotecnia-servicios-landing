@@ -1,6 +1,9 @@
 import { z } from "zod";
 
+// Regex para emails: evita rangos inválidos al colocar el guion al final.
 export const EMAIL_REGEX = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
+// Regex para nombres: permite letras, espacios, apóstrofes y guiones.
+export const NAME_REGEX = /^[A-Za-zÁÉÍÓÚáéíóúÑñÜü' -]+$/;
 
 export const contactSchema = z.object({
   nombre: z
@@ -8,7 +11,7 @@ export const contactSchema = z.object({
     .trim()
     .min(2, { message: "El nombre debe tener al menos 2 caracteres" })
     .max(100, { message: "El nombre es demasiado largo" })
-    .regex(/^[A-Za-zÁÉÍÓÚáéíóúÑñÜü'\s-]+$/, { message: "El nombre contiene caracteres inválidos" }),
+    .regex(NAME_REGEX, { message: "El nombre contiene caracteres inválidos" }),
   email: z
     .string()
     .trim()
