@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { toast } from "@/hooks/use-toast";
-import { contactSchema, EMAIL_REGEX } from "@/lib/contact-schema";
+import { contactSchema } from "@/lib/contact-schema";
 import {
   Layers,
   Hammer,
@@ -448,7 +448,6 @@ const Index = () => {
                   name="email"
                   type="email"
                   required
-                  pattern={EMAIL_REGEX.source}
                   maxLength={254}
                   className="h-11 rounded-md border bg-background px-3 outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 />
