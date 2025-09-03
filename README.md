@@ -203,37 +203,105 @@ Cualquier omisión de un campo obligatorio o violación de las reglas de formato
 
 ### Respuestas (Response)
 
-* `200 OK` → `{ "ok": true }`.
-* `400 Bad Request` → Errores de validación o reCAPTCHA.
-* `405 Method Not Allowed` → Método distinto de POST.
-* `500 Internal Server Error` → Errores de configuración, BD o envío de correos.
+La API responde con JSON y códigos HTTP significativos según el resultado:
+
+* **200 OK** – Indica que la solicitud de contacto se procesó con éxito de principio a fin. El cuerpo será un JSON de la forma:
+  ```json
+  { "ok": true }
+  ```
+  Este éxito implica que: los datos eran válidos, el captcha fue verificado positivamente, la información se guardó en la base de datos y los correos de notificación se enviaron sin errores.
+  El cliente utiliza esta respuesta para notificar al usuario del éxito.
+* **400 Bad Request** – Indica que hubo un problema con los datos enviados por el cliente o con la verificación de seguridad. En este caso, el cuerpo incluirá la clave "error" con un mensaje
+  explicativo en español. Algunos escenarios que llevan a 400:
+  - **Validación de campos fallida**: Si algún campo está vacío o no cumple los requisitos (por ejemplo, email con formato inválido, mensaje muy corto, etc.), el servidor responde con 400 y
+    `{"error": "<detalle>"}` . El detalle suele ser el mensaje de error del esquema Zod para el primer campo problemático, por ejemplo: `{ "error": "El nombre debe tener al menos 2 caracteres" }`.
+  - **Token reCAPTCHA faltante o inválido**: Si no se proporciona el campo `token` en el JSON, la API devuelve `{"error": "Falta token reCAPTCHA"}` con estatus 400 . Si el token está pero
+    Google indica que no es válido o que el puntaje es bajo (posible bot), se retorna `{"error": "Verificación reCAPTCHA fallida"}`. Asimismo, si la petición a la API de Google no se
+    pudo completar por algún problema de red, se notifica con `{"error": "No se pudo verificar reCAPTCHA"}`.
+* 405 Method Not Allowed – Si se accede a la URL con un método distinto de POST, la función inmediatamente responde con este código y un mensaje de error. Esto previene accesos
+  indebidos (por ejemplo, navegadores precargando la URL con GET, o intentos manuales) . El mensaje devuelto es en inglés por defecto (`{"error": "Method not allowed"}`) .
+* **500 Internal Server Error** – Indica que ocurrió un problema en el servidor al procesar la solicitud, pese a que los datos y el token fueran correctos. Situaciones que pueden llevar a un 500 y sus mensajes:
+  - **Configuración faltante**: Si el servidor no tiene definidas las variables de entorno necesarias para operar, aborta la operación. Por ejemplo, si falta la URL o la clave de servicio de Supabase,
+    se retorna {"error": "Supabase no configurado"} . Si falta la clave API de Resend, responde {"error": "Falta RESEND_API_KEY, no se envió email"} . También,
+    aunque no esté explícito en el código, si faltara la clave secreta de reCAPTCHA (`RECAPTCHA_SECRET_KEY`), sucedería un error similar (el código devuelve 500 "reCAPTCHA no
+    configurado" antes de intentar la verificación). Estos checks garantizan que no se intente operar sin credenciales necesarias.
+  - **Error de base de datos**: Si la conexión a Supabase falla o la inserción en la tabla produce un error (por ejemplo, por un problema de esquema, red, etc.), la respuesta será {"error": "No
+    se pudo guardar en Supabase: <mensaje>"} con código 500 . El <mensaje> proviene del error concreto devuelto por la librería de Supabase, dando pista del motivo.
+  - **Error de envío de correo**: Si ocurre una excepción al intentar enviar los emails (por ejemplo, tiempo de espera de la API de Resend, o un error en los datos del correo), se captura en el
+    bloque `catch` y se retorna `{"error": "No se pudieron enviar los correos"}` con código 500 . En este punto, es posible que la solicitud sí haya quedado almacenada en la BD,
+    pero al usuario se le informa del fallo en el último paso (envío de mails). El backend escribe un registro del error en la consola (`console.error`) para facilitar su depuración en los logs de Vercel.
+    
+Ejemplo de respuesta de error 400 (campo inválido):
+
+```json
+HTTP/1.1 400 Bad Request
+Content-Type: application/json
+
+{ "error": "Email inválido" }
+```
+
+Ejemplo de respuesta de éxito 200:
+
+```json
+HTTP/1.1 200 OK
+Content-Type: application/json
+
+{ "ok": true }
+```
 
 ### Ejemplo de uso (cURL):
 
+A continuación, se muestra un ejemplo hipotético de cómo se podría invocar el endpoint POST /api/contact usando curl desde línea de comandos (suponiendo que ya se obtuvo un token válido de reCAPTCHA v3 para
+simplificar el ejemplo):
+
 ```bash
-curl -X POST https://<tu-dominio>/api/contact \
--H "Content-Type: application/json" \
--d '{"nombre":"Ana Gómez","email":"ana.gomez@example.com","empresa":"Construcciones AG","mensaje":"Necesito un estudio","token":"XXXX"}'
+curl -X POST https://geotecniayservicios.es/api/contact \
+  -H "Content-Type: application/json" \
+  -d '{
+    "nombre": "Ana Gómez",
+    "email": "ana.gomez@example.com",
+    "empresa": "Construcciones AG",
+    "mensaje": "Hola, necesito un estudio geotécnico para un terreno urbanizable de 500m2.",
+    "token": "XXXXYY-recaptcha-token-XXXX"
+  }'
 ```
 
----
+Si todos los datos son correctos y el token es válido, la respuesta sería:
+
+```json
+{ "ok": true }
+```
+
+En caso contrario, se obtendría una respuesta de error con el código HTTP correspondiente y el JSON con el detalle del problema, tal como se describió arriba.
+
+*(Nota: en condiciones reales, obtener un token reCAPTCHA válido implica cargar la página web y ejecutar el JavaScript del cliente; por lo tanto, no es trivial simular completamente una petición válida solo con 
+curl. Sin embargo, este ejemplo ilustra la forma del payload que espera la API.)*
 
 ## Variables de configuración y entorno
 
-* `VITE_RECAPTCHA_SITE_KEY` → Clave pública reCAPTCHA.
-* `RECAPTCHA_SECRET_KEY` → Clave secreta reCAPTCHA.
-* `SUPABASE_URL`
-* `SUPABASE_SERVICE_ROLE`
-* `RESEND_API_KEY`
-* `CONTACT_TO_EMAIL` → Correo de notificaciones.
-* `CONTACT_FROM_EMAIL` → Correo remitente.
+Para que la aplicación funcione correctamente, es necesario configurar una serie de **variables de entorno** tanto para la parte de cliente (front-end) como para la parte de servidor (back-end). A continuación se 
+listan dichas variables y su propósito:
 
-En **desarrollo**: archivo `.env`.
-En **producción (Vercel)**: configurar en *Environment Variables*.
+| Variable                       | Descripción                                                                                                                                                                                                                                                                                                                                                              |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **VITE\_RECAPTCHA\_SITE\_KEY** | Clave de sitio (*Site Key*) de Google reCAPTCHA v3, asociada al dominio de la página. Es usada en el código cliente para cargar el script de reCAPTCHA y solicitar tokens. Debe comenzar con `VITE_` para que Vite la exponga al frontend.                                                                                                                               |
+| **RECAPTCHA\_SECRET\_KEY**     | Clave secreta privada de reCAPTCHA v3. Se obtiene al registrar el sitio en Google reCAPTCHA y **no** debe compartirse públicamente. El backend la utiliza para verificar los tokens recibidos con la API de Google.                                                                                                                                                      |
+| **SUPABASE\_URL**              | URL de la instancia o proyecto de Supabase a usar como base de datos (por ej., `https://xyzcompany.supabase.co`). El backend la necesita para conectar con la base de datos.                                                                                                                                                                                             |
+| **SUPABASE\_SERVICE\_ROLE**    | Clave de API con rol de servicio de Supabase. Proporciona privilegios elevados (lectura/escritura) en la base de datos. La función de contacto la usa para poder insertar datos en la tabla sin restricciones. **Importante:** Debe almacenarse solo en el entorno del servidor (Vercel) y nunca en el código cliente.                                                   |
+| **RESEND\_API\_KEY**           | Clave API proporcionada por el servicio Resend para autorizar el envío de emails. La función de contacto la necesita para inicializar el cliente de Resend. Si no se configura, no será posible enviar correos de notificación.                                                                                                                                          |
+| **CONTACT\_TO\_EMAIL**         | Dirección de correo electrónico destino a la que se enviarán las notificaciones de nuevas solicitudes. En general será el correo del profesional o empresa (ej: `geotecniayservicios@gmail.com`). Puede definirse un valor por defecto en código, pero es recomendable configurarla explícitamente.                                                                      |
+| **CONTACT\_FROM\_EMAIL**       | Dirección de correo remitente que aparecerá en los emails enviados. Se recomienda usar un email bajo el dominio propio (ej: `no-reply@geotecniayservicios.es`) y verificarlo en Resend para evitar bloqueos o que el correo llegue a spam. Los destinatarios verán este email como origen y las respuestas se dirigirán al Reply-To configurado (el correo del cliente). |
 
----
+Para entorno de desarrollo local, estas variables se pueden colocar en un archivo `.env` en la raíz del proyecto. Vite cargará las que comiencen con `VITE_` para el front-end, y las demás pueden ser
+utilizadas por la función serverless si se ejecuta en un contexto local (por ejemplo, mediante la herramienta de desarrollo de Vercel CLI o en pruebas unitarias). En el entorno de producción (Vercel),
+estas variables deben configurarse en la sección de **Environment Variables** del proyecto, con sus respectivos valores para producción (y opcionalmente para previsualización).
 
-## Instalación y ejecución
+Además de lo anterior, hay algunas configuraciones de entorno que afectan el comportamiento de desarrollo: - El servidor de desarrollo de Vite está configurado para correr en el **puerto 8080** por
+defecto . Si se desea cambiar, se puede ajustar en `vite.config.ts` o establecer la variable de entorno `PORT`. - Vercel Analytics: el código incluye la integración con Vercel Analytics (`@vercel/
+analytics`) que se activa en `main.tsx`. Esto puede requerir una variable o configuración en Vercel, aunque en este caso simplemente con importar e invocar `inject()` se habilita el
+seguimiento anónimo de uso.
+
+## Instalación y ejecución (guía para desarrolladores)
 
 1. Clonar repo:
 
