@@ -26,7 +26,7 @@ formulario de contacto y lo envía, el navegador ejecuta lógica JavaScript para
 Si la validación es correcta, el cliente envía una solicitud HTTP POST al endpoint `*/api/contact* ` incluido en el mismo dominio.
 
 - **Función API (Backend sin servidor)**: Es una función serverless desplegada en Vercel (archivo `api/contact.ts` ) que actúa como endpoint REST para el formulario. Recibe la solicitud POST
-con los datos del formulario y el token reCAPTCHA, y realiza varias tareas de manera secuencial:
+  con los datos del formulario y el token reCAPTCHA, y realiza varias tareas de manera secuencial:
     1. **Validación de entrada**: Verifica que la solicitud use el método correcto (POST) y valida el formato de los datos usando el esquema Zod definido para el formulario.
        Si algún dato requerido falta o no cumple las reglas
        (ej. email inválido, campos demasiado cortos), responde con error 400 y un mensaje descriptivo.
@@ -57,32 +57,59 @@ con los datos del formulario y el token reCAPTCHA, y realiza varias tareas de ma
     - *Resend*: es un servicio de envío de emails transaccionales. La aplicación lo utiliza para el envío de notificaciones y confirmaciones sin tener que configurar un servidor de correo propio. Se requiere
       una cuenta de Resend con su API Key y probablemente la verificación del dominio o remitente desde el cual se envían los correos. La integración se realiza vía la librería oficial de Resend para Node.js,
       instanciando el cliente con la API Key y llamando a `resend.emails.send` con los parámetros correspondientes.
-En resumen, la arquitectura es altamente modular: el front-end se encarga de la presentación y validación básica, delegando la lógica de negocio al back-end serverless; este, a su vez, confía en servicios
-externos para las tareas de verificación (captcha), persistencia (BD) y notificación (emails). Gracias a esta separación, el sistema es escalable (Vercel puede instanciar más funciones en paralelo
+      
+En resumen, la arquitectura es altamente modular: el **front-end** se encarga de la presentación y validación básica, delegando la lógica de negocio al **back-end serverless**; este, a su vez, confía en **servicios
+externos** para las tareas de verificación (captcha), persistencia (BD) y notificación (emails). Gracias a esta separación, el sistema es escalable (Vercel puede instanciar más funciones en paralelo
 según la carga), y la complejidad de infraestructura propia se reduce al mínimo, apoyándose en soluciones SaaS para las partes críticas.
 
 ---
 
 ## Estructura del código fuente
 
-```plaintext
+El repositorio se organiza en dos partes principales: el código de la aplicación React (dentro de `src/`) y las funciones serverless (directorio `api/`). A continuación se muestra la estructura simplificada 
+de directorios y archivos relevantes:
+
+```bash
 geotecnia-servicios-landing/
 ├── api/
-│   └── contact.ts
+│   └── contact.ts           # Función API (Vercel) para procesar el formulario de contacto:contentReference[oaicite:23]{index=23}
 ├── src/
-│   ├── assets/
-│   ├── components/
-│   ├── hooks/
-│   ├── lib/
-│   ├── pages/
-│   ├── index.css
-│   ├── App.tsx
-│   └── main.tsx
-├── package.json
-└── vite.config.ts
+│   ├── assets/              # Recursos estáticos (imágenes, logos, etc.)
+│   ├── components/          # Componentes reutilizables de UI (incluyendo shadcn/ui)
+│   ├── hooks/               # Hooks personalizados de React (por ejemplo, lógica de notificaciones)
+│   ├── lib/                 # Utilidades y configuración (p.ej., esquema de validación Zod) 
+│   ├── pages/               # Vistas o páginas de la SPA (Index, NotFound, etc.)
+│   ├── index.css            # Estilos globales (Tailwind CSS)
+│   ├── App.tsx              # Componente raíz de la aplicación React (define rutas):contentReference[oaicite:24]{index=24}
+│   └── main.tsx             # Punto de entrada; monta React en el DOM e inicia analíticas:contentReference[oaicite:25]{index=25}
+├── package.json             # Dependencias y scripts de construcción/ejecución:contentReference[oaicite:26]{index=26}
+└── vite.config.ts           # Configuración de Vite (aliases, puerto dev, etc.)
 ```
 
-### Detalles
+Algunos detalles a resaltar de la estructura:
+
+- **Página principal**: La vista de la página de inicio (`src/pages/Index.tsx`) contiene la mayor parte del contenido de la web: secciones de servicios, galería de imágenes, testimonios/proyectos, proceso y el
+  formulario de **Contacto** hacia el final. Esta página se monta en la ruta raíz "/" a través del enrutador de React Router definido en `App.tsx`. Adicionalmente, `src/pages/NotFound.tsx` provee
+  una página simple para rutas no existentes (error 404).
+- **Componentes UI**: En `src/components/ui/` se encuentran componentes de interfaz reutilizables (botones, tarjetas, alertas, etc.), muchos de ellos generados a partir de la biblioteca
+  shadcn/UI, lo que asegura consistencia en estilos y accesibilidad. Por ejemplo, el componente de **Toast/Toaster** (notificaciones emergentes) se utiliza para dar retroalimentación al usuario al
+  enviar el formulario.
+- **Hooks personalizados**: `src/hooks/` contiene lógica reutilizable en forma de hooks de React. Un hook importante es `use-toast` (sistema de notificaciones), que se usa para mostrar
+  mensajes de éxito o error en la pantalla según la respuesta del formulario.
+- **Utilidades (lib)**: En `src/lib/` residen funciones auxiliares y configuraciones generales. Destaca el archivo `contact-schema.ts`, donde se define el **esquema de validación** para el
+  formulario de contacto usando Zod . Este módulo exporta tanto el esquema (`contactSchema`) como el tipo TypeScript inferido (`ContactForm`), y es utilizado tanto en el
+  front-end como en el back-end para validar los datos de forma coherente.
+- **Función API**: El directorio `api/` en la raíz contiene la función serverless `contact.ts` que implementa el endpoint **POST** `/api/contact`. Vercel detecta este archivo y lo despliega como
+  una lambda Node.js. Dentro del archivo, además de la lógica de negocio ya descrita, se pueden ver comentarios que especifican las **variables de entorno** esperadas y algunas decisiones
+  de diseño (por ejemplo, un intento de implementar limitación de tasa in-memory está comentado con recomendaciones para producción).
+- **Pruebas**: Existe un archivo de pruebas unitarias `api/contact.test.ts` que valida el comportamiento de la función de contacto. Estas pruebas usan Vitest (un framework de testing) y hacen
+  *mock* de las dependencias externas (Supabase, Resend, fetch para reCAPTCHA) para comprobar casos de éxito y error sin realizar llamadas reales. Por ejemplo, hay tests que
+  verifican que se retorne 405 en caso de método GET, 400 si faltan campos o token, y 200 OK en el flujo completo exitoso. Esto sirve como documentación ejecutable de cómo debe
+  comportarse la API en distintas situaciones.
+En conjunto, la estructura busca mantener una separación clara entre la lógica de frontend (interacción de usuario) y la lógica de backend (procesamiento de solicitudes). Asimismo, aprovecha la reutilización
+de código (e.g., el esquema Zod compartido) para minimizar incoherencias entre cliente y servidor.
+
+### Detalles del formulario de contacto (Front-end)
 
 * `src/pages/Index.tsx` → Página principal.
 * `src/components/ui/` → UI reutilizable (shadcn/ui).
@@ -188,15 +215,3 @@ En **producción (Vercel)**: configurar en *Environment Variables*.
 * Internacionalización (i18n).
 * Nuevos campos en formulario → actualizar **Zod, React form, Supabase, emails**.
 * Mejor feedback visual en envío.
-
----
-
-## Recursos del repositorio
-
-* [`Index.tsx`](https://github.com/asobrados03/geotecnia-servicios-landing/blob/a74ca27786320aff8120eb84bf375df670178a59/src/pages/Index.tsx)
-* [`contact.ts`](https://github.com/asobrados03/geotecnia-servicios-landing/blob/a74ca27786320aff8120eb84bf375df670178a59/api/contact.ts)
-* [`App.tsx`](https://github.com/asobrados03/geotecnia-servicios-landing/blob/a74ca27786320aff8120eb84bf375df670178a59/src/App.tsx)
-* [`main.tsx`](https://github.com/asobrados03/geotecnia-servicios-landing/blob/a74ca27786320aff8120eb84bf375df670178a59/src/main.tsx)
-* [`package.json`](https://github.com/asobrados03/geotecnia-servicios-landing/blob/a74ca27786320aff8120eb84bf375df670178a59/package.json)
-* [`contact-schema.ts`](https://github.com/asobrados03/geotecnia-servicios-landing/blob/a74ca27786320aff8120eb84bf375df670178a59/src/lib/contact-schema.ts)
-* [`contact.test.ts`](https://github.com/asobrados03/geotecnia-servicios-landing/blob/a74ca27786320aff8120eb84bf375df670178a59/api/contact.test.ts)
