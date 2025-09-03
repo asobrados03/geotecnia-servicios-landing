@@ -7,7 +7,7 @@
 presupuestos o más información. Esta solicitud de contacto activa un flujo automatizado que guarda los datos del cliente y notifica por correo electrónico al responsable de la empresa, a la vez que envía una
 confirmación al cliente.
 El proyecto está construido con tecnologías web modernas: **React 18** con **TypeScript** para la interfaz de usuario, empaquetado con **Vite** y estilizado con **Tailwind CSS**. Emplea componentes UI de la librería
-**shadcn/ui** (basada en Radix UI) para lograr una apariencia consistente. En el navegador se utiliza** React Router DOM** para manejar las rutas (actualmente la aplicación es esencialmente de una sola página
+**shadcn/ui** (basada en Radix UI) para lograr una apariencia consistente. En el navegador se utiliza **React Router DOM** para manejar las rutas (actualmente la aplicación es esencialmente de una sola página
 con anclajes a secciones). Para la gestión de estado del formulario se integra **Zod** (validación de esquemas) y **React Hook Form** (aunque la implementación final del formulario utiliza manejo manual
 de eventos). El sitio está pensado para despliegue en Vercel, aprovechando sus *functions* sin servidor para implementar la lógica del formulario de contacto. Además, el proyecto integra servicios externos:
 **Google reCAPTCHA v3** para protección anti-spam, **Supabase** como base de datos para almacenar las solicitudes de contacto, y **Resend** como servicio de envío de correos electrónicos de notificación.
