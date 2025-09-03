@@ -1,10 +1,10 @@
 import { z } from "zod";
 
 // Regex para emails: evita rangos inválidos al colocar el guion al final.
-export const EMAIL_REGEX = /^[A-Za-z0-9._%+\-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
+export const EMAIL_REGEX = /^[-A-Za-z0-9._%+]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
 
 // Regex para nombres: permite letras, espacios, apóstrofes y guiones.
-export const NAME_REGEX = /^[A-Za-zÁÉÍÓÚáéíóúÑñÜü' -]+$/;
+export const NAME_REGEX  = /^[A-Za-zÁÉÍÓÚáéíóúÑñÜü' -]+$/;
 
 export const contactSchema = z.object({
   nombre: z
@@ -17,7 +17,6 @@ export const contactSchema = z.object({
     .string()
     .trim()
     .toLowerCase()
-    .email({ message: "Email inválido" })
     .max(254, { message: "Email demasiado largo" })
     .regex(EMAIL_REGEX, { message: "Email inválido" }),
   empresa: z
