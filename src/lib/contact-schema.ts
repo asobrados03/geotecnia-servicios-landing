@@ -5,10 +5,7 @@ export const contactSchema = z.object({
     .trim()
     .min(2, { message: "El nombre debe tener al menos 2 caracteres" })
     .max(100, { message: "El nombre es demasiado largo" }),
-  email: z.email({ message: "Email inválido" })
-    .trim()
-    .toLowerCase()
-    .max(254, { message: "Email demasiado largo" }),
+  email: z.email({ message: "Email inválido" }).max(254),
   empresa: z.string()
     .trim()
     .min(2, { message: "La empresa debe tener al menos 2 caracteres" })
