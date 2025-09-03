@@ -14,8 +14,6 @@ de eventos). El sitio está pensado para despliegue en Vercel, aprovechando sus 
 En las secciones siguientes se detalla la arquitectura general, la estructura del código, la documentación de la API de contacto (POST `/api/contact` ), instrucciones de despliegue/uso y consideraciones sobre
 seguridad, rendimiento y posibles mejoras.
 
----
-
 ## Arquitectura del sistema
 
 *Figura: Diagrama de la arquitectura de la aplicación.* La aplicación sigue una arquitectura tipo Jamstack, separando el front-end estático del back-end sin servidor, con integración de servicios de terceros. Los
@@ -62,8 +60,6 @@ En resumen, la arquitectura es altamente modular: el **front-end** se encarga de
 externos** para las tareas de verificación (captcha), persistencia (BD) y notificación (emails). Gracias a esta separación, el sistema es escalable (Vercel puede instanciar más funciones en paralelo
 según la carga), y la complejidad de infraestructura propia se reduce al mínimo, apoyándose en soluciones SaaS para las partes críticas.
 
----
-
 ## Estructura del código fuente
 
 El repositorio se organiza en dos partes principales: el código de la aplicación React (dentro de `src/`) y las funciones serverless (directorio `api/`). A continuación se muestra la estructura simplificada 
@@ -106,19 +102,60 @@ Algunos detalles a resaltar de la estructura:
   *mock* de las dependencias externas (Supabase, Resend, fetch para reCAPTCHA) para comprobar casos de éxito y error sin realizar llamadas reales. Por ejemplo, hay tests que
   verifican que se retorne 405 en caso de método GET, 400 si faltan campos o token, y 200 OK en el flujo completo exitoso. Esto sirve como documentación ejecutable de cómo debe
   comportarse la API en distintas situaciones.
+
 En conjunto, la estructura busca mantener una separación clara entre la lógica de frontend (interacción de usuario) y la lógica de backend (procesamiento de solicitudes). Asimismo, aprovecha la reutilización
 de código (e.g., el esquema Zod compartido) para minimizar incoherencias entre cliente y servidor.
 
 ### Detalles del formulario de contacto (Front-end)
 
-* `src/pages/Index.tsx` → Página principal.
-* `src/components/ui/` → UI reutilizable (shadcn/ui).
-* `src/hooks/` → Hooks (ej. `use-toast`).
-* `src/lib/contact-schema.ts` → Validación con Zod.
-* `api/contact.ts` → Función serverless.
-* `api/contact.test.ts` → Tests unitarios con Vitest.
+El formulario de contacto es una pieza clave de la página principal y su implementación enfatiza la validación, usabilidad y protección contra spam en el lado del cliente antes de enviar datos al
+servidor. A continuación se explican sus características y flujo:
 
----
+- **Campos del formulario**: El formulario solicita cuatro datos al usuario: **Nombre, Email, Empresa** (opcional) y **Mensaje**. Estos campos están asociados al esquema de validación definido en
+  `contact-schema.ts` , que establece las siguientes reglas:
+  - **Nombre ( `nombre` )** – Texto obligatorio, entre 2 y 100 caracteres. Solo se permiten letras (incluyendo acentos, eñes, diéresis), espacios, guiones y apóstrofos . Si el usuario ingresa un
+    nombre muy corto o con caracteres inválidos, se mostrará un mensaje de error como "El nombre debe tener al menos 2 caracteres" o "El nombre contiene caracteres inválidos".
+  - **Email ( `email` )** – Texto obligatorio con formato de email válido. Se normaliza a minúsculas y tiene un máximo de 254 caracteres . Debe coincidir con un patrón general de email (por
+    ejemplo, `usuario@dominio.tld` ). Un error típico sería “Email inválido” si no pasa la validación.
+  - **Empresa ( `empresa` )** – Texto opcional. Si se proporciona, debe tener al menos 2 caracteres y hasta 100 como máximo . Este campo puede quedar vacío sin error (se interpretará como
+    `null` en el backend), pero de tener contenido se le aplican reglas similares de longitud. Mensaje ( mensaje ) – Texto obligatorio, de 10 a 1000 caracteres . Es el cuerpo de la solicitud
+    que describe las necesidades del cliente. Si el mensaje es demasiado corto, el sistema avisará "El mensaje debe tener al menos 10 caracteres" para incentivar una descripción útil.
+  - **Mensaje ( `mensaje` )** – Texto obligatorio, de 10 a 1000 caracteres . Es el cuerpo de la solicitud que describe las necesidades del cliente. Si el mensaje es demasiado corto, el sistema avisará "El
+    mensaje debe tener al menos 10 caracteres" para incentivar una descripción útil.
+
+  Estas reglas aseguran que antes de intentar enviar nada al servidor, el usuario haya proporcionado datos razonables. La ventaja de definirlas con Zod es que el mismo esquema se reutiliza en el backend para 
+  una segunda capa de validación consistente.
+
+- **Validación en el cliente**: Al hacer clic en “Enviar” (o “Solicitar presupuesto”), se ejecuta la función de manejo del formulario handleSubmit. Esta función primero previene el comportamiento por defecto
+  del formulario HTML (que recargaría la página) y recoge los datos mediante la API FormData del navegador. Luego:
+  1. **Honeypot anti-spam**: Existe un campo oculto en el formulario, típicamente llamado `"website"` (no visible para usuarios reales). Si un bot automatizado completa este campo
+     (simulando un envío), el código detecta que tiene contenido y cancela el envío inmediatamente. Este truco de *honeypot* ayuda a filtrar algunos bots que no distinguen campos legítimos de trampas.
+  2. **Validación con Zod**: Los datos recopilados se convierten a un objeto `raw` y se validan usando `contactSchema.safeParse(raw)` en el propio front-end . Si `safeParse` indica que la entrada es inválida,
+     significa que algún campo no cumplió las reglas mencionadas; en tal caso se extrae el mensaje de error proporcionado por Zod (por ejemplo, el de longitud insuficiente) y se
+     muestra al usuario mediante una notificación emergente (*toast*) indicándole que corrija ese dato. La función entonces se detiene (no procede a enviar nada al servidor) hasta que el usuario
+     ajuste la información. Este mecanismo ofrece una respuesta rápida al usuario sobre errores de entrada, sin necesidad de esperar la respuesta del servidor.
+  3. **Obtención  del token reCAPTCHA**: Si los datos básicos son válidos, el siguiente paso es obtener un **token de reCAPTCHA v3**. Cuando la página se cargó, ya debió haber insertado el script de
+     reCAPTCHA de Google con la clave de sitio pública (`VITE_RECAPTCHA_SITE_KEY`) . Ahora, `handleSubmit` llama a una función auxiliar `getRecaptchaToken()` que utiliza la API
+     global `grecaptcha.execute(siteKey, { action: "contact" })` para obtener un token asociado a la acción "contact" . Esta llamada es asíncrona; si por algún motivo falla o
+     `grecaptcha` no está disponible, la función devuelve una cadena vacía. El código comprueba este resultado, y si no hay token, notifica un error al usuario ("No se pudo verificar reCAPTCHA")
+     y cancela el envío . En condiciones normales, Google retornará un token (cadena opaca) que posteriormente el servidor validará. *Nota*: reCAPTCHA v3 funciona de forma invisible para el
+     usuario, asignando un puntaje de fiabilidad; por eso no requiere interacción del usuario, pero es importante haberlo cargado previamente y ejecutar la acción en el cliente antes de llamar al backend.
+  4. **Llamada al endpoint `/api/contact`**: Con los datos listos y el token reCAPTCHA obtenido, el cliente procede a enviar la solicitud al servidor. Esto se realiza mediante `fetch` hacia la ruta
+     `/api/contact` usando el método POST, con las cabeceras y cuerpo JSON apropiados . En el cuerpo se incluyen todos los campos del formulario (nombre, email, empresa, mensaje) y el
+     token. Es importante destacar que en este punto el formulario se deshabilita para prevenir múltiples envíos simultáneos: se usa un estado `isSubmitting` para mostrar un indicador de
+     carga (por ejemplo, cambiando el botón a un estado de "enviando...").
+  5. **Manejo de la respuesta**: Tras efectuar el fetch, el código espera la respuesta del servidor. Se intenta parsear el JSON de respuesta, y luego se evalúa:
+     - Si la respuesta no es OK (estatus != 200) o el JSON de respuesta no contiene `ok: true`, se considera un fallo. En la rama de error, se lanza una excepción para unificar el flujo de
+       manejo de errores . Esa excepción es capturada en el bloque `catch`, donde se extrae el mensaje de error (sea el proporcionado por la API o un genérico) y se muestra al
+       usuario en un toast de error ("Error al enviar: [detalle]") . Por ejemplo, si el captcha falló, el servidor devolvió `{ error: "Verificación reCAPTCHA fallida" }` con
+       400, y el usuario verá ese texto en la notificación.
+     - Si la respuesta indica éxito (200 y `ok: true`), significa que la solicitud fue registrada correctamente. En este caso, se muestra un toast de éxito al usuario, con un mensaje
+       amistoso de agradecimiento. El mensaje incluye el nombre de pila del usuario si éste se proporcionó, por ejemplo: "Juan, hemos recibido tu mensaje y te responderemos en
+       menos de 24h.". Luego se limpia el formulario (reset de los campos) para que el usuario pueda enviar otra consulta si lo desea en el futuro.
+
+En general, la experiencia de usuario está diseñada para ser fluida: validación inmediata de errores obvios, feedback rápido en caso de problemas de verificación, y confirmación clara de éxito. Además, se
+incorporan detalles para mejorar la calidad de la información recibida, como la conversión del email a minúsculas automáticamente , la eliminación de espacios sobrantes en todos los campos
+(`.trim()` en el esquema) y la prevención de doble envío mediante deshabilitación del botón mientras se procesa.
 
 ## Formulario de contacto (Front-end)
 
