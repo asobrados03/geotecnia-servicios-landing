@@ -234,7 +234,7 @@ La API responde con JSON y códigos HTTP significativos según el resultado:
 Ejemplo de respuesta de error 400 (campo inválido):
 
 ```json
-HTTP/1.1 400 Bad Request
+HTTP/2 400 Bad Request
 Content-Type: application/json
 
 { "error": "Email inválido" }
@@ -243,7 +243,7 @@ Content-Type: application/json
 Ejemplo de respuesta de éxito 200:
 
 ```json
-HTTP/1.1 200 OK
+HTTP/2 200 OK
 Content-Type: application/json
 
 { "ok": true }
@@ -303,22 +303,102 @@ seguimiento anónimo de uso.
 
 ## Instalación y ejecución (guía para desarrolladores)
 
-1. Clonar repo:
+A continuación se describen los pasos para instalar y ejecutar el proyecto en un entorno local de
+desarrollo, así como para ejecutar las pruebas y desplegar en producción:
+
+1. **Prerequisitos**: Asegúrate de tener instalado Node.js (se recomienda una versión actual LTS) y npm. Además, necesitarás crear cuentas/credenciales en los servicios externos usados:
+   - Una cuenta de Google reCAPTCHA v3 (para obtener Site Key y Secret Key vinculadas a tu dominio o `localhost` para pruebas).
+   - Una cuenta de Supabase (para obtener un proyecto URL y la clave de servicio, y crear la tabla `contact_requests`).
+   - Una cuenta de Resend (para obtener la API Key y configurar un remitente o dominio verificado). Estos datos se integrarán vía variables de entorno en el siguiente paso.
+
+2. **Clonar el repositorio**:
 
    ```bash
    git clone https://github.com/asobrados03/geotecnia-servicios-landing.git
    cd geotecnia-servicios-landing
    ```
-2. Crear `.env`.
-3. Instalar dependencias: `npm install`.
-4. Modo desarrollo: `npm run dev`.
+3. **Configurar variables de entorno**: Crear un archivo `.env` en la raíz del proyecto (añádelo al `.gitignore` para no subirlo a git). En ese archivo, definir las variables mencionadas en la sección
+   anterior. Ejemplo:
 
-   * Para backend: usar `vercel dev`.
-5. Tests: `npm test`.
-6. Build producción: `npm run build`.
-7. Despliegue en Vercel: importar desde GitHub o usar `vercel --prod`.
+   ```dotenv
+   VITE_RECAPTCHA_SITE_KEY=tu_clave_site_recaptcha
+   RECAPTCHA_SECRET_KEY=tu_clave_secreta_recaptcha
+   SUPABASE_URL=https://tuproyecto.supabase.co
+   SUPABASE_SERVICE_ROLE=tu_clave_de_servicio_supabase
+   RESEND_API_KEY=tu_api_key_resend
+   CONTACT_TO_EMAIL=tu_email_notificaciones
+   CONTACT_FROM_EMAIL=tu_email_remitente
+   ```
+   Asegúrate de rellenar cada una con los valores reales correspondientes. Si lo deseas, puedes omitir alguna (por ejemplo, `CONTACT_TO_EMAIL` y `CONTACT_FROM_EMAIL`) para usar los valores por defecto codificados,
+   pero es recomendable definirlas explícitamente.
+   
+4. **Instalar dependencias**:
+   Ejecuta `npm install` para descargar todas las dependencias listadas en `package.json`. Esto incluye las librerías de React, Vite, Tailwind, etc., además de las SDKs de Supabase y Resend.
+5. **Ejecución en modo desarrollo**:
+   Ejecuta `npm run dev`. Esto iniciará el servidor de desarrollo de Vite en http://127.0.0.1:8080 (según la configuración por defecto) . Deberías ver en la consola un mensaje indicando en
+   qué URL está sirviendo la aplicación. Abre esa URL en tu navegador; la página debería cargar con el contenido de la landing. Las secciones de la página (Servicios, Galería, Proyectos, Proceso,
+   Contacto) deberían ser navegables y el formulario de Contacto estar disponible al final.
 
----
+   *Nota: En modo desarrollo, el backend de contacto (/api/contact) puede no funcionar automáticamente al simplemente correr `npm run dev`, ya que eso sólo levanta el servidor estático React. Para probar el endpoint
+   en local, hay un par de opciones:*
+   
+   - Usar la **CLI de Vercel**: Si tienes Vercel CLI instalado (`npm i -g vercel`), puedes ejecutar `vercel dev` en lugar de `npm run dev`. Esto iniciará tanto el servidor frontend (en otro puerto) como las funciones
+     serverless en un entorno local que emula Vercel. Entonces podrías probar el formulario completo (necesitarás asegurar que las variables de entorno están disponibles para Vercel dev).
+   -  Ejecutar pruebas unitarias (ver siguiente paso) como una forma indirecta de verificar la lógica de backend.
+   -  Alternativamente, desplegar en un entorno de pruebas en Vercel y probar allí.
+6. **Ejecutar pruebas automáticas**:
+   El proyecto incluye pruebas para la función de contacto. Para ejecutarlas, asegúrate de haber instalado las dependencias (paso 4) y luego ejecuta:
+   
+   ```bash
+   npm test
+   ```
+   ó
+   
+   ```bash
+   npm run test
+   ```
+   
+   Esto lanzará Vitest y ejecutará los casos de prueba definidos. Deberías ver en la salida cuántos tests pasaron. Un resultado exitoso indicará que la función API se comporta como se espera en escenarios
+   típicos (ver sección de estructura de código sobre pruebas). Ten en cuenta que estas pruebas están **moqueando** las llamadas externas, por lo que no necesitan credenciales reales ni harán inserciones/email
+   de verdad; se enfocan en la lógica interna.
+   
+7. **Construcción para producción**:
+   Si deseas generar una versión optimizada de la aplicación, ejecuta:
+
+   ```bash
+   npm run build
+   ```
+
+   Esto invocará a Vite para crear un paquete de producción minificado. Los archivos resultantes quedarán en el directorio `dist/`. Allí estarán el `index.html`, los assets (CSS/JS) y recursos estáticos optimizados.
+   Esta carpeta `dist` es la que Vercel servirá como contenido estático. Puedes probar localmente esta versión de producción ejecutando `npm run preview` después del build, que lanza un servidor local sirviendo
+   `dist/` para ver cómo funcionaría en producción.
+   
+8. **Despliegue en Vercel**:
+   Para desplegar en Vercel, tienes dos caminos:
+   - **Usando GitHub**: Si el repositorio está en GitHub, puedes importarlo en Vercel (mediante la interfaz web de Vercel). Vercel detectará que es un proyecto Vite (React) y automáticamente usará `npm run build`
+     para la parte estática. Asegúrate de configurar en Vercel las variables de entorno necesarias (Site Key, Secret Key, etc. mencionadas antes) en el apartado de *Settings -> Environment Variables* de tu
+     proyecto Vercel. Una vez desplegado, Vercel se encargará de servir la aplicación estática y habilitar la función `api/contact.ts` como endpoint serverless bajo tu dominio
+     (por ejemplo, https://tu-app.vercel.app/api/contact).
+   - **Usando Vercel CLI**: Desde tu directorio local, tras haber hecho el build, puedes ejecutar `vercel` o `vercel --prod` si ya tienes la CLI configurada con tu cuenta. Esto subirá el contenido y la función. De
+     nuevo, recuerda haber configurado las env vars con `vercel env add` o en el panel web antes del despliegue.
+   Durante el despliegue, Vercel te dará un dominio temporal (y podrás configurar un dominio personalizado si lo tienes). Prueba la aplicación en producción: verifica que puedas enviar el formulario y que
+   se estén recibiendo los correos. **Importante**: en un entorno real de producción, reCAPTCHA v3 requiere que el dominio desde el cual se ejecuta (ej. tu dominio o el de vercel) esté registrado en la consola
+   de reCAPTCHA. Asegúrate de agregar el dominio de producción en la configuración de reCAPTCHA, de lo contrario el token será rechazado por Google.
+9. **Solución de problemas comunes**:
+   - *El formulario devuelve "reCAPTCHA no configurado" o "Falta token reCAPTCHA"*: Indica que probablemente no se establecieron correctamente las claves de reCAPTCHA. Verifica que `VITE_RECAPTCHA_SITE_KEY`
+     esté presente en el front (puedes inspeccionar en las herramientas de desarrollador si el script de reCAPTCHA se carga) y que `RECAPTCHA_SECRET_KEY` esté configurada en el entorno del backend.
+   - *El formulario devuelve "Supabase no configurado"*: Asegúrate de haber definido `SUPABASE_URL` y `SUPABASE_SERVICE_ROLE`. Si están definidos pero sigue el error, puede ser que la función no los esté recogiendo;
+     comprueba las mayúsculas y valores. En local, variables definidas en `.env` no estarán disponibles para la función a menos que uses `vercel dev` u otra forma de cargarlas en Node (Vitest las carga en los
+     tests manualmente en `beforeEach`).
+   - *El formulario devuelve "No se pudieron enviar los correos"*: Esto significa que algo falló al intentar enviar mediante Resend. Verifica que la `RESEND_API_KEY` sea correcta y que el servicio de Resend esté
+     operativo. También revisa que `CONTACT_FROM_EMAIL` sea un remitente válido (por ejemplo, Resend requiere verificar el dominio o bandeja desde la que se envía; intenta usar una dirección pre-verificada). Si
+     el error persiste, revisa los logs de Vercel para más detalle (se hace `console.error` del error de Resend).
+   - *No llegan los correos pese a que la API indicó ok*: Verifica en tu cuenta de Resend si hay registros de envíos. Puede ser que se enviaran correctamente pero caigan en spam o sean bloqueados si el remitente
+     no está verificado. Asegura el registro SPF/DKIM si usas un dominio propio para mejorar la entregabilidad.
+   - *Errores de CORS o ruta no encontrada*: En entorno local, si pruebas el endpoint fuera de la app (ej. usando curl o herramientas REST), podrías necesitar asegurarte de incluir la URL correcta. En producción,
+     el endpoint está bajo el mismo dominio que la app, por lo que el frontend no debe tener problemas de CORS al ser misma fuente. Si desplegaras el backend por separado en otro dominio, sí tendrías que
+     habilitar CORS en la función.
+
 
 ## Consideraciones de diseño, seguridad y rendimiento
 
