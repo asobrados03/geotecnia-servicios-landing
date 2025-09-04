@@ -16,8 +16,6 @@ seguridad, rendimiento y posibles mejoras.
 
 ## Arquitectura del sistema
 
-*Figura: Diagrama de la arquitectura de la aplicación.* 
-
 ```mermaid
 flowchart LR
   subgraph Cliente ["Cliente Navegador"]
@@ -73,6 +71,40 @@ flowchart LR
   RESP -->|JSON respuesta| FE_APP
   FE_APP -->|Toast confirmacion| U
 ```
+
+*Figura: Diagrama de la arquitectura de la aplicación.* 
+
+```mermaid
+sequenceDiagram
+  participant U as Usuario
+  participant FE as Frontend (React + Vite)
+  participant API as Backend (/api/contact)
+  participant GRC as Google reCAPTCHA
+  participant SB as Supabase
+  participant RS as Resend
+
+  U->>FE: Completa formulario
+  FE->>FE: Validacion local (Zod + honeypot)
+  FE->>GRC: Solicita token reCAPTCHA v3
+  GRC-->>FE: Devuelve token
+  FE->>API: POST /api/contact {datos + token}
+
+  API->>API: Validacion de entrada
+  API->>GRC: Verifica token con secret
+  GRC-->>API: Resultado (score)
+  alt Score < 0.5
+    API-->>FE: 400 {error: "Captcha fallido"}
+  else Score OK
+    API->>SB: Inserta datos en contact_requests
+    SB-->>API: Confirmacion
+    API->>RS: Envia email notificacion + confirmacion
+    RS-->>API: Confirmacion
+    API-->>FE: 200 {ok: true}
+    FE-->>U: Toast de exito
+  end
+```
+
+*Figura: Diagrama de secuencia de la aplicación*
 
 La aplicación sigue una arquitectura tipo Jamstack, separando el front-end estático del back-end sin servidor, con integración de servicios de terceros. Los
 principales componentes y el flujo de datos son los siguientes:
