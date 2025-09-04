@@ -72,7 +72,7 @@ flowchart LR
   FE_APP -->|Toast confirmacion| U
 ```
 
-*Figura: Diagrama de la arquitectura de la aplicación.* 
+*Figura 1: Diagrama de la arquitectura de la aplicación.* 
 
 ```mermaid
 sequenceDiagram
@@ -104,7 +104,7 @@ sequenceDiagram
   end
 ```
 
-*Figura: Diagrama de secuencia de la aplicación*
+*Figura 2: Diagrama de secuencia de la aplicación*
 
 La aplicación sigue una arquitectura tipo Jamstack, separando el front-end estático del back-end sin servidor, con integración de servicios de terceros. Los
 principales componentes y el flujo de datos son los siguientes:
