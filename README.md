@@ -18,7 +18,7 @@ seguridad, rendimiento y posibles mejoras.
 
 *Figura: Diagrama de la arquitectura de la aplicación.* 
 
-´´´mermaid
+```mermaid
 flowchart LR
   subgraph Cliente ["Cliente Navegador"]
     U[Usuario]
@@ -72,7 +72,7 @@ flowchart LR
 
   RESP -->|JSON respuesta| FE_APP
   FE_APP -->|Toast confirmacion| U
-´´´
+```
 
 La aplicación sigue una arquitectura tipo Jamstack, separando el front-end estático del back-end sin servidor, con integración de servicios de terceros. Los
 principales componentes y el flujo de datos son los siguientes:
