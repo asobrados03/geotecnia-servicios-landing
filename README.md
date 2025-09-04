@@ -16,7 +16,65 @@ seguridad, rendimiento y posibles mejoras.
 
 ## Arquitectura del sistema
 
-*Figura: Diagrama de la arquitectura de la aplicación.* La aplicación sigue una arquitectura tipo Jamstack, separando el front-end estático del back-end sin servidor, con integración de servicios de terceros. Los
+*Figura: Diagrama de la arquitectura de la aplicación.* 
+
+´´´mermaid
+flowchart LR
+  subgraph Cliente ["Cliente Navegador"]
+    U[Usuario]
+  end
+
+  subgraph FE ["Frontend Vercel - React + Vite"]
+    FE_APP[Landing SPA HTML-CSS-JS estatico]
+    FE_FORM[Formulario de contacto - validacion Zod + honeypot]
+    FE_RECAPTCHA[reCAPTCHA v3 site key]
+  end
+
+  subgraph BE ["Backend Vercel Serverless"]
+    API[/POST /api/contact/]
+    VALID[1 Validacion de entrada]
+    RC_VERIFY[2 Verificacion reCAPTCHA]
+    DB[3 Persistencia en Supabase]
+    MAIL[4 Envio de emails con Resend]
+    RESP[5 Respuesta al cliente]
+  end
+
+  subgraph SAAS ["Servicios externos"]
+    GRC[Google reCAPTCHA v3]
+    SB[Supabase - PostgreSQL]
+    RS[Resend - Emails transaccionales]
+  end
+
+  U -->|Visita landing| FE_APP
+  FE_APP --> FE_FORM
+  FE_FORM -->|Valida datos + honeypot| FE_FORM
+  FE_FORM -->|Solicita token| FE_RECAPTCHA
+  FE_RECAPTCHA -->|Token| FE_FORM
+  FE_FORM -->|POST /api/contact| API
+
+  API --> VALID
+  VALID -->|ok| RC_VERIFY
+  VALID -.->|400 invalido| RESP
+
+  RC_VERIFY -->|verifica| GRC
+  GRC -->|score| RC_VERIFY
+  RC_VERIFY -->|>=0.5 ok| DB
+  RC_VERIFY -.->|400 fallo captcha| RESP
+
+  DB -->|insert ok| MAIL
+  DB -.->|500 error BD| RESP
+  DB -->|guarda solicitud en Base de Datos| SB
+
+  MAIL -->|envia correo| RS
+  RS -->|ok| MAIL
+  MAIL --> RESP
+  MAIL -.->|500 error email| RESP
+
+  RESP -->|JSON respuesta| FE_APP
+  FE_APP -->|Toast confirmacion| U
+´´´
+
+La aplicación sigue una arquitectura tipo Jamstack, separando el front-end estático del back-end sin servidor, con integración de servicios de terceros. Los
 principales componentes y el flujo de datos son los siguientes:
 
 - **Frontend (Cliente web)**: Una aplicación React SPA (Single Page Application) construida con Vite. Se sirve como archivos estáticos (HTML, CSS, JS) desde Vercel. Cuando un usuario rellena el
