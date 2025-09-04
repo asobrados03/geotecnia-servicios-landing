@@ -158,7 +158,7 @@ de directorios y archivos relevantes:
 ```bash
 geotecnia-servicios-landing/
 ├── api/
-│   └── contact.ts           # Función API (Vercel) para procesar el formulario de contacto:contentReference[oaicite:23]{index=23}
+│   └── contact.ts           # Función API (Vercel) para procesar el formulario de contacto
 ├── src/
 │   ├── assets/              # Recursos estáticos (imágenes, logos, etc.)
 │   ├── components/          # Componentes reutilizables de UI (incluyendo shadcn/ui)
@@ -166,9 +166,9 @@ geotecnia-servicios-landing/
 │   ├── lib/                 # Utilidades y configuración (p.ej., esquema de validación Zod) 
 │   ├── pages/               # Vistas o páginas de la SPA (Index, NotFound, etc.)
 │   ├── index.css            # Estilos globales (Tailwind CSS)
-│   ├── App.tsx              # Componente raíz de la aplicación React (define rutas):contentReference[oaicite:24]{index=24}
-│   └── main.tsx             # Punto de entrada; monta React en el DOM e inicia analíticas:contentReference[oaicite:25]{index=25}
-├── package.json             # Dependencias y scripts de construcción/ejecución:contentReference[oaicite:26]{index=26}
+│   ├── App.tsx              # Componente raíz de la aplicación React (define rutas)
+│   └── main.tsx             # Punto de entrada; monta React en el DOM e inicia analíticas
+├── package.json             # Dependencias y scripts de construcción/ejecución
 └── vite.config.ts           # Configuración de Vite (aliases, puerto dev, etc.)
 ```
 
@@ -208,8 +208,7 @@ servidor. A continuación se explican sus características y flujo:
   - **Email ( `email` )** – Texto obligatorio con formato de email válido. Se normaliza a minúsculas y tiene un máximo de 254 caracteres . Debe coincidir con un patrón general de email (por
     ejemplo, `usuario@dominio.tld` ). Un error típico sería “Email inválido” si no pasa la validación.
   - **Empresa ( `empresa` )** – Texto opcional. Si se proporciona, debe tener al menos 2 caracteres y hasta 100 como máximo . Este campo puede quedar vacío sin error (se interpretará como
-    `null` en el backend), pero de tener contenido se le aplican reglas similares de longitud. Mensaje ( mensaje ) – Texto obligatorio, de 10 a 1000 caracteres . Es el cuerpo de la solicitud
-    que describe las necesidades del cliente. Si el mensaje es demasiado corto, el sistema avisará "El mensaje debe tener al menos 10 caracteres" para incentivar una descripción útil.
+    `null` en el backend), pero de tener contenido se le aplican reglas similares de longitud.
   - **Mensaje ( `mensaje` )** – Texto obligatorio, de 10 a 1000 caracteres . Es el cuerpo de la solicitud que describe las necesidades del cliente. Si el mensaje es demasiado corto, el sistema avisará "El
     mensaje debe tener al menos 10 caracteres" para incentivar una descripción útil.
 
