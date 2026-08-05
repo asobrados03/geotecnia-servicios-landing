@@ -3,6 +3,9 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "engines": {
+    "node": ">=22.22.0"
+  },
   "scripts": {
     "dev": "vite --host 127.0.0.1",
     "build": "vite build",
@@ -40,10 +43,10 @@
     "@radix-ui/react-toggle": "^1.1.10",
     "@radix-ui/react-toggle-group": "^1.1.11",
     "@radix-ui/react-tooltip": "^1.2.8",
-    "@supabase/supabase-js": "^2.56.1",
+    "@supabase/supabase-js": "^2.112.1",
     "@tanstack/react-query": "^5.85.8",
     "@vercel/analytics": "^1.5.0",
-    "@vercel/node": "^5.3.17",
+    "@vercel/node": "^5.9.5",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
@@ -57,9 +60,9 @@
     "react-dom": "^19.1.1",
     "react-hook-form": "^7.62.0",
     "react-resizable-panels": "^3.0.5",
-    "react-router-dom": "^7.8.2",
+    "react-router": "^8.3.0",
     "recharts": "^3.1.2",
-    "resend": "^6.0.2",
+    "resend": "^6.18.1",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.3.1",
     "tailwindcss-animate": "^1.0.7",
@@ -91,7 +94,17 @@
   },
   "overrides": {
     "path-to-regexp": "6.3.0",
-    "undici": "5.29.0"
+    "@vercel/node": {
+      "undici": "6.28.0"
+    },
+    "@vercel/static-config": {
+      "ajv": "8.20.0"
+    },
+    "@vercel/python-analysis": {
+      "js-yaml": "5.2.3",
+      "minimatch": "10.2.6",
+      "smol-toml": "1.7.1"
+    }
   },
   "packageManager": "pnpm@11.5.1+sha512.93f7b57422ea7068257235b4c16eb60762eb68e1dc23723199cc739043ea9be2c4143274a399d8c6defa2b1176226d9ca1c4b63482d6200c1a8fbaa78c1d1485"
 }
