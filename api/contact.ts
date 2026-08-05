@@ -3,6 +3,8 @@ import { Resend } from "resend";
 import { createClient } from "@supabase/supabase-js";
 import { contactSchema } from "../src/lib/contact-schema.js";
 
+const SUPABASE_INSERT_TIMEOUT_MS = 3000;
+
 // Expected env vars (configure in Vercel Project Settings -> Environment Variables)
 // - RESEND_API_KEY
 // - SUPABASE_URL
@@ -49,34 +51,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   // const ip = (req.headers["x-forwarded-for"] || req.socket?.remoteAddress || "").toString();
   // No persistent store here to keep example simple.
 
-  // Insert into Supabase
-  const supabaseUrl = process.env.SUPABASE_URL;
-  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE; // server-side only
-  if (!supabaseUrl || !supabaseServiceKey) {
-    return res.status(500).json({ error: "Supabase no configurado" });
-  }
-  const supabase = createClient(supabaseUrl, supabaseServiceKey, { auth: { persistSession: false } });
-
-  const insertPayload = {
-    nombre: nombreV,
-    email: emailV,
-    empresa: empresaV ?? null,
-    mensaje: mensajeV,
-    created_at: new Date().toISOString(),
-  };
-
-  const { error: dbError } = await supabase.from("contact_requests").insert(insertPayload);
-  if (dbError) {
-    return res.status(500).json({ error: `No se pudo guardar en Supabase: ${dbError.message}` });
-  }
-
-  // Send emails via Resend
+  // Send emails via Resend. This is the critical path: if the email arrives, the lead is not lost
+  // even when Supabase is paused or temporarily unavailable.
   const resendKey = process.env.RESEND_API_KEY;
   const toEmail = process.env.CONTACT_TO_EMAIL || "geotecniayservicios@gmail.com";
   const fromEmail = process.env.CONTACT_FROM_EMAIL || "no-reply@geotecniayservicios.es";
 
   if (!resendKey) {
-    // Record already saved, but cannot send notification emails
     return res.status(500).json({ error: "Falta RESEND_API_KEY, no se envió email" });
   }
 
@@ -107,6 +88,41 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   } catch (err) {
     console.error("Error enviando correos de contacto", err);
     return res.status(500).json({ error: "No se pudieron enviar los correos" });
+  }
+
+  // Supabase is used as a secondary archive. It is intentionally best-effort so a paused
+  // free-tier database cannot block a successful contact request.
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE; // server-side only
+  if (!supabaseUrl || !supabaseServiceKey) {
+    console.error("Supabase no configurado: solicitud recibida por email, pero no archivada en BD");
+    return res.status(200).json({ ok: true });
+  }
+
+  const supabase = createClient(supabaseUrl, supabaseServiceKey, { auth: { persistSession: false } });
+  const insertPayload = {
+    nombre: nombreV,
+    email: emailV,
+    empresa: empresaV ?? null,
+    mensaje: mensajeV,
+    created_at: new Date().toISOString(),
+  };
+
+  try {
+    const dbResult = await Promise.race([
+      supabase.from("contact_requests").insert(insertPayload),
+      new Promise<"timeout">((resolve) => {
+        setTimeout(() => resolve("timeout"), SUPABASE_INSERT_TIMEOUT_MS);
+      }),
+    ]);
+
+    if (dbResult === "timeout") {
+      console.error(`Timeout guardando solicitud en Supabase tras ${SUPABASE_INSERT_TIMEOUT_MS}ms`);
+    } else if (dbResult.error) {
+      console.error("No se pudo guardar la solicitud en Supabase", dbResult.error);
+    }
+  } catch (err) {
+    console.error("Error inesperado guardando solicitud en Supabase", err);
   }
 
   return res.status(200).json({ ok: true });

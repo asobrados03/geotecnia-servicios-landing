@@ -175,6 +175,7 @@ const Index = () => {
     const website = form.get("website");
     if (typeof website === "string" && website.trim() !== "") {
       (e.target as HTMLFormElement).reset();
+      setIsSubmitting(false);
       return;
     }
 

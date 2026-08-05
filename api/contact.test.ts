@@ -1,5 +1,6 @@
 import { describe, expect, it, beforeEach, vi } from 'vitest';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { createClient } from '@supabase/supabase-js';
 import handler from './contact';
 
 interface MockReq {
@@ -76,6 +77,29 @@ describe('api/contact handler', () => {
     process.env.RESEND_API_KEY = 'resend';
     process.env.CONTACT_TO_EMAIL = 'to@example.com';
     process.env.CONTACT_FROM_EMAIL = 'from@example.com';
+    const req: MockReq = {
+      method: 'POST',
+      body: { nombre: 'Juan', email: 'juan@example.com', mensaje: 'Mensaje válido', token: 'tok' }
+    };
+    const res = createRes();
+    await handler(req as unknown as VercelRequest, res as unknown as VercelResponse);
+    expect(res.statusCode).toBe(200);
+    expect(res._json).toEqual({ ok: true });
+  });
+
+  it('returns 200 when Supabase insert fails after emails are sent', async () => {
+    global.fetch = vi.fn(async () => ({ json: async () => ({ success: true, score: 0.9 }) })) as unknown as typeof fetch;
+    process.env.SUPABASE_URL = 'url';
+    process.env.SUPABASE_SERVICE_ROLE = 'key';
+    process.env.RESEND_API_KEY = 'resend';
+    process.env.CONTACT_TO_EMAIL = 'to@example.com';
+    process.env.CONTACT_FROM_EMAIL = 'from@example.com';
+
+    vi.mocked(createClient).mockReturnValueOnce({
+      from: () => ({ insert: vi.fn().mockResolvedValue({ error: new Error('database paused') }) })
+    } as unknown as ReturnType<typeof createClient>);
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
     const req: MockReq = {
       method: 'POST',
       body: { nombre: 'Juan', email: 'juan@example.com', mensaje: 'Mensaje válido', token: 'tok' }
