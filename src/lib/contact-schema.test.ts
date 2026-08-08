@@ -28,4 +28,30 @@ describe('contactSchema', () => {
     const parsed = contactSchema.safeParse({ ...valid, empresa: undefined });
     expect(parsed.success).toBe(true);
   });
+
+  it('trims string fields before returning parsed data', () => {
+    const parsed = contactSchema.safeParse({
+      nombre: '  Ana Ruiz  ',
+      email: 'ana@example.com',
+      empresa: '  GeoLab  ',
+      mensaje: '  Necesito revisar una cimentación existente.  ',
+    });
+
+    expect(parsed.success).toBe(true);
+    if (parsed.success) {
+      expect(parsed.data).toEqual({
+        nombre: 'Ana Ruiz',
+        email: 'ana@example.com',
+        empresa: 'GeoLab',
+        mensaje: 'Necesito revisar una cimentación existente.',
+      });
+    }
+  });
+
+  it('rejects fields over their maximum lengths', () => {
+    expect(contactSchema.safeParse({ ...valid, nombre: 'a'.repeat(101) }).success).toBe(false);
+    expect(contactSchema.safeParse({ ...valid, email: `${'a'.repeat(246)}@test.com` }).success).toBe(false);
+    expect(contactSchema.safeParse({ ...valid, empresa: 'a'.repeat(101) }).success).toBe(false);
+    expect(contactSchema.safeParse({ ...valid, mensaje: 'a'.repeat(1001) }).success).toBe(false);
+  });
 });

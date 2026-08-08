@@ -39,6 +39,30 @@ export default defineConfig(({ mode }) => {
       globals: true,
       environment: "jsdom",
       setupFiles: "./src/test/setup.ts",
+      coverage: {
+        provider: "v8",
+        reporter: ["text", "json", "html"],
+        include: [
+          "api/contact.ts",
+          "src/App.tsx",
+          "src/hooks/use-mobile.tsx",
+          "src/hooks/use-toast.ts",
+          "src/lib/**/*.ts",
+          "src/pages/**/*.tsx",
+        ],
+        exclude: [
+          "src/**/*.test.*",
+          "src/main.tsx",
+          "src/test/**",
+          "src/components/ui/**",
+        ],
+        thresholds: {
+          lines: 80,
+          functions: 80,
+          branches: 80,
+          statements: 80,
+        },
+      },
     },
   };
 });
