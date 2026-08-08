@@ -1,20 +1,20 @@
 # Geotecnia y Servicios
 
-Landing page profesional para **Geotecnia y Servicios**, una empresa de ingenieria geotecnica. El sitio presenta servicios, proyectos, galeria de trabajos y un formulario de contacto orientado a solicitudes de presupuesto.
+Landing page profesional para Geotecnia y Servicios, un geólogo autónomo especializado en servicios geotécnicos. El sitio presenta servicios, proyectos, galería de trabajos y un formulario de contacto orientado a solicitudes de presupuesto.
 
-El proyecto esta preparado para desplegarse en Vercel como una aplicacion React estatica con una funcion serverless para procesar contactos.
+El proyecto está preparado para desplegarse en Vercel como una aplicación React estática con una función serverless para procesar contactos.
 
 ## Estado actual
 
 - Frontend SPA con React, TypeScript, Vite y Tailwind CSS.
 - Secciones principales: hero, servicios, galeria, proyectos, proceso y contacto.
-- Galeria alimentada automaticamente desde `src/assets/gallery/`.
-- Formulario de contacto con validacion compartida mediante Zod.
-- Proteccion anti-spam con honeypot y Google reCAPTCHA v3.
-- Endpoint `POST /api/contact` implementado como funcion serverless de Vercel.
-- Emails transaccionales con Resend: notificacion interna y respuesta automatica al cliente.
-- Archivado opcional en Supabase como paso best-effort despues del envio de emails.
-- Analiticas de Vercel activadas desde `src/main.tsx`.
+- Galería alimentada automáticamente desde `src/assets/gallery/`.
+- Formulario de contacto con validación compartida mediante Zod.
+- Protección anti-spam con honeypot y Google reCAPTCHA v3.
+- Endpoint `POST /api/contact` implementado como función serverless de Vercel.
+- Emails transaccionales con Resend: notificacion interna y respuesta automática al cliente.
+- Archivado opcional en Supabase como paso best-effort despues del envío de emails.
+- Analíticas de Vercel activadas desde `src/main.tsx`.
 - Tests con Vitest para utilidades, esquema de contacto y API.
 
 ## Stack
@@ -98,7 +98,7 @@ pnpm test       # Vitest
 VITE_RECAPTCHA_SITE_KEY=...
 ```
 
-La clave publica se usa para cargar reCAPTCHA v3 en el navegador y pedir un token con la accion `contact`.
+La clave pública se usa para cargar reCAPTCHA v3 en el navegador y pedir un token con la acción `contact`.
 
 ### API serverless
 
@@ -111,20 +111,20 @@ SUPABASE_URL=...
 SUPABASE_SERVICE_ROLE=...
 ```
 
-`CONTACT_TO_EMAIL` y `CONTACT_FROM_EMAIL` tienen valores por defecto en `api/contact.ts`, pero conviene configurarlos explicitamente en Vercel. `SUPABASE_SERVICE_ROLE` debe existir solo en servidor y no debe exponerse al cliente.
+`CONTACT_TO_EMAIL` y `CONTACT_FROM_EMAIL` tienen valores por defecto en `api/contact.ts`, pero conviene configurarlos explícitamente en Vercel. `SUPABASE_SERVICE_ROLE` debe existir solo en servidor y no debe exponerse al cliente.
 
 ## Flujo del formulario
 
 1. El usuario completa `nombre`, `email`, `empresa` opcional y `mensaje`.
-2. El frontend descarta silenciosamente envios que rellenan el campo honeypot `website`.
+2. El frontend descarta silenciosamente envíos que rellenan el campo honeypot `website`.
 3. Los datos se validan con `contactSchema`.
 4. El navegador solicita un token de reCAPTCHA v3.
-5. Se envia `POST /api/contact` con los datos validados y el token.
-6. La API valida metodo, payload y reCAPTCHA.
-7. La API envia dos emails con Resend:
-   - Notificacion interna a `CONTACT_TO_EMAIL`.
-   - Confirmacion automatica al email del cliente.
-8. Si los emails se envian correctamente, la API intenta archivar la solicitud en Supabase.
+5. Se envía `POST /api/contact` con los datos validados y el token.
+6. La API valida método, payload y reCAPTCHA.
+7. La API envía dos emails con Resend:
+   - Notificación interna a `CONTACT_TO_EMAIL`.
+   - Confirmación automática al email del cliente.
+8. Si los emails se envían correctamente, la API intenta archivar la solicitud en Supabase.
 9. Supabase es best-effort: si no esta configurado, falla o supera el timeout de 3 segundos, la solicitud sigue respondiendo `200 { "ok": true }` porque el lead ya fue enviado por email.
 
 ## Contrato de `POST /api/contact`
@@ -144,16 +144,16 @@ Payload esperado:
 Respuestas principales:
 
 - `200 { "ok": true }`: contacto procesado.
-- `400 { "error": "..." }`: datos invalidos, token ausente o reCAPTCHA fallido.
-- `405 { "error": "Method not allowed" }`: metodo distinto de POST.
-- `500 { "error": "..." }`: configuracion critica ausente o fallo enviando emails.
+- `400 { "error": "..." }`: datos inválidos, token ausente o reCAPTCHA fallido.
+- `405 { "error": "Method not allowed" }`: método distinto de POST.
+- `500 { "error": "..." }`: configuración critica ausente o fallo enviando emails.
 
-## Validacion de contacto
+## Validación de contacto
 
 El esquema compartido esta en `src/lib/contact-schema.ts`:
 
 - `nombre`: obligatorio, 2-100 caracteres.
-- `email`: obligatorio, email valido, maximo 254 caracteres.
+- `email`: obligatorio, email valido, máximo 254 caracteres.
 - `empresa`: opcional, 2-100 caracteres si se proporciona.
 - `mensaje`: obligatorio, 10-1000 caracteres.
 
@@ -161,7 +161,7 @@ El esquema compartido esta en `src/lib/contact-schema.ts`:
 
 El despliegue objetivo es Vercel:
 
-- Vite genera el frontend estatico con `pnpm build`.
+- Vite genera el frontend estático con `pnpm build`.
 - Vercel detecta `api/contact.ts` como funcion serverless.
 - Las variables de entorno deben configurarse en el panel del proyecto.
 - El remitente de Resend debe estar autorizado/verificado segun la configuracion de la cuenta.
@@ -182,8 +182,8 @@ El despliegue objetivo es Vercel:
 La suite actual cubre:
 
 - `contactSchema`: datos validos, email invalido, mensaje corto y empresa opcional.
-- `cn`: composicion de clases y resolucion de conflictos Tailwind.
-- `api/contact`: metodo invalido, payload invalido, token ausente, flujo exitoso y fallo de Supabase posterior al envio de emails.
+- `cn`: composición de clases y resolución de conflictos Tailwind.
+- `api/contact`: método invalido, payload invalido, token ausente, flujo exitoso y fallo de Supabase posterior al envío de emails.
 
 Ejecutar:
 
@@ -198,5 +198,5 @@ pnpm build
 - Las imagenes nuevas de la galeria pueden agregarse a `src/assets/gallery/`; Vite las importa automaticamente.
 - Las rutas se definen en `src/App.tsx`.
 - El contenido principal de la landing vive en `src/pages/Index.tsx`.
-- Los tokens visuales y estilos globales estan en `src/index.css`.
-- `WARP.md` conserva informacion historica y puede estar desactualizado frente al codigo actual.
+- Los tokens visuales y estilos globales están en `src/index.css`.
+- `WARP.md` conserva información histórica y puede estar desactualizado frente al código actual.
