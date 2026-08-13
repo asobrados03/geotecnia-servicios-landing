@@ -1,5 +1,14 @@
 # Geotecnia y Servicios
 
+![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=000)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?logo=typescript&logoColor=fff)
+![Vite](https://img.shields.io/badge/Vite-7.1-646CFF?logo=vite&logoColor=fff)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4.1-06B6D4?logo=tailwindcss&logoColor=fff)
+![Vercel](https://img.shields.io/badge/Vercel-Serverless-000?logo=vercel&logoColor=fff)
+![Resend](https://img.shields.io/badge/Resend-Email-000?logo=resend&logoColor=fff)
+![Supabase](https://img.shields.io/badge/Supabase-Optional_archive-3FCF8E?logo=supabase&logoColor=fff)
+![Vitest](https://img.shields.io/badge/Vitest-Tests-6E9F18?logo=vitest&logoColor=fff)
+
 Landing page profesional para Geotecnia y Servicios, un geólogo autónomo especializado en servicios geotécnicos. El sitio presenta servicios, proyectos, galería de trabajos y un formulario de contacto orientado a solicitudes de presupuesto.
 
 El proyecto está preparado para desplegarse en Vercel como una aplicación React estática con una función serverless para procesar contactos.
