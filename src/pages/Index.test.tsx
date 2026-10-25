@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import Index from "./Index";
 import { toast } from "@/hooks/use-toast";
@@ -22,7 +22,11 @@ describe("Index page", () => {
         name: /servicios geotécnicos profesionales para obras seguras/i,
       })
     ).toBeInTheDocument();
-    expect(screen.getByRole("navigation", { name: /navegación principal/i })).toBeInTheDocument();
+    const primaryNavigation = screen.getByRole("navigation", { name: /navegación principal/i });
+    expect(primaryNavigation).toBeInTheDocument();
+    expect(
+      within(primaryNavigation).getByRole("link", { name: /preguntas frecuentes/i })
+    ).toHaveAttribute("href", "#preguntas-frecuentes");
     expect(screen.getByRole("heading", { name: /^servicios geotécnicos$/i })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: /galería de imágenes/i })).toBeInTheDocument();
     expect(screen.getByRole("form", { name: /formulario de contacto/i })).toBeInTheDocument();
