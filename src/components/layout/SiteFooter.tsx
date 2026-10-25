@@ -6,6 +6,7 @@ const footerLinks = [
     { href: "#proyectos", label: "Ámbitos de trabajo" },
     { href: "#colaboracion", label: "Colaboración" },
     { href: "#proceso", label: "Metodología" },
+    { href: "#preguntas-frecuentes", label: "Preguntas frecuentes" },
     { href: "#contacto", label: "Contacto" },
 ];
 
